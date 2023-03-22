@@ -1,0 +1,5 @@
+pymongo[srv]
+overpass
+munch
+python-dotenv
+jupyter
