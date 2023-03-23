@@ -1,0 +1,93 @@
+{
+    "title": "User document schema",
+    "description": "This document records the details of a platform user.",
+    "bsonType": "object",
+    "properties": {
+        "_id": {
+            "description": "A unique identifier for a user",
+            "bsonType": "objectId"
+        },
+        "username": {
+            "description": "Unique username of the user",
+            "bsonType": "string",
+            "minLength": 2
+        },
+        "displayName": {
+            "description": "Display name of the user",
+            "bsonType": "string",
+            "minLength": 2
+        },
+        "trustScore": {
+            "description": "Score of how trusted the user is by the community.",
+            "bsonType": "int"
+        },
+        "ipAddress": {
+            "description": "IP address of the user's phone.",
+            "bsonType": "string"
+        },
+        "avatar": {
+            "description": "URL to the user's avatar picture.",
+            "bsonType": "string"
+        },
+        "authentication": {
+            "description": "User authentication information.",
+            "bsonType": "object",
+            "properties": {
+                "type": {
+                    "description": "Authentication type",
+                    "bsonType": "string",
+                    "pattern": "(apple|google|email)"
+                },
+                "email": {
+                    "description": "User's email address.",
+                    "bsonType": "string"
+                },
+                "passwordHash": {
+                    "description": "User password hash.",
+                    "bsonType": "string"
+                }
+            },
+            "required": [
+                "type"
+            ]
+        },
+        "creationTime": {
+            "description": "Creation datetime of the account user.",
+            "bsonType": "date"
+        },
+        "lastLocation": {
+            "description": "Last physical location of the user.",
+            "bsonType": "object",
+            "properties": {
+                "type": {
+                    "description": "Type of the location. Will always be 'Point'.",
+                    "bsonType": "string",
+                    "pattern": "Point"
+                },
+                "coordinates": {
+                    "description": "Coordinate pair. Longitude, Latitude",
+                    "bsonType": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                        "description": "Single coordinate",
+                        "bsonType": "number"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "coordinates"
+            ]
+        }
+    },
+    "required": [
+        "_id",
+        "username",
+        "displayName",
+        "trustScore",
+        "creationTime",
+        "authentication"
+    ],
+    "additionalProperties": false
+}
