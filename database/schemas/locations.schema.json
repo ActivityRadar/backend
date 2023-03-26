@@ -1,0 +1,161 @@
+{
+    "title": "Activity location document schema",
+    "description": "This document records the details of an activity location.",
+    "bsonType": "object",
+    "properties": {
+        "_id": {
+            "description": "A unique identifier for a location",
+            "bsonType": "objectId"
+        },
+        "osmId": {
+            "description": "A unique identifier from OpenStreetMap.",
+            "bsonType": "number"
+        },
+        "name": {
+            "description": "Short description of the location",
+            "bsonType": "string",
+        },
+        "trustScore": {
+            "description": "Score of how trusted the user is by the community.",
+            "bsonType": "int"
+        },
+        "creation": {
+            "description": "Creation information.",
+            "bsonType": "object",
+            "properties": {
+                "createdBy": {
+                    "description": "Instance that created the entry.",
+                    "bsonType": "string",
+                    "pattern": "(OSM|APP)"
+                },
+                "date": {
+                    "description": "Creation date. (Either when it was first added to OSM or the platform)",
+                    "bsonType": "date"
+                },
+                "userId": {
+                    "description": "ID of the creating user.",
+                    "bsonType": "objectId"
+                }
+            },
+            "required": [
+                "createdBy",
+                "date"
+            ]
+        },
+        "location": {
+            "description": "Physical center of the location.",
+            "bsonType": "object",
+            "properties": {
+                "type": {
+                    "description": "GeoJSON type. Will always be 'Point'.",
+                    "bsonType": "string",
+                    "pattern": "Point"
+                },
+                "coordinates": {
+                    "description": "Coordinate pair. Longitude, Latitude",
+                    "bsonType": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                        "description": "Single coordinate",
+                        "bsonType": "number"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "coordinates"
+            ]
+        },
+        "geometry": {
+            "description": "GeoJSON geometry of the location.",
+            "bsonType": "object",
+            "properties": {
+                "type": {
+                    "description": "GeoJSON type of the geometry.",
+                    "bsonType": "string",
+                    "pattern": "(LineString|FeatureCollection)"
+                },
+            },
+            "required": [
+                "type"
+            ],
+            "additionalProperties": true
+        },
+        "photos": {
+            "description": "Pictures of the location.",
+            "bsonType": "array",
+            "items": {
+                "description": "Single photo's information",
+                "bsonType": "object",
+                "properties": {
+                    "userId": {
+                        "description": "User ID of the uploader.",
+                        "bsonType": "objectId"
+                    },
+                    "url": {
+                        "description": "URL pointing to the photo's storage location.",
+                        "bsonType": "string"
+                    },
+                    "creationDate": {
+                        "description": "Date when the photo was uploaded.",
+                        "bsonType": "date"
+                    }
+                }
+            }
+        },
+        "tags": {
+            "description": "Tags from OpenSteetMap containing additional information.",
+            "bsonType": "object",
+            "additionalProperties": true
+        },
+        "recentReviews": {
+            "description": "Short list of recent reviews. (Partial copy of reviews)",
+            "bsonType": "array",
+            "items": {
+                "description": "Single review information.",
+                "bsonType": "object",
+                "properties": {
+                    "userId": {
+                        "description": "ID of the reviewing user.",
+                        "bsonType": "objectId"
+                    },
+                    "text": {
+                        "description": "Description of the location in prosa.",
+                        "bsonType": "string"
+                    },
+                    "dateTime": {
+                        "description": "Time of the creation or modification.",
+                        "bsonType": "date"
+                    },
+                    "overallRating": {
+                        "description": "Conclusion of the review in points.",
+                        "bsonType": "number"
+                    },
+                    "details": {
+                        "description": "Location specific reviewable properties.",
+                        "bsonType": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "required": [
+                    "userId",
+                    "datetime",
+                    "overallRating"
+                ],
+                "maxItems": 3
+            }
+        }
+    },
+    "required": [
+        "_id",
+        "location",
+        "name",
+        "photos",
+        "creation",
+        "trustScore",
+        "tags",
+        "recentReviews"
+    ],
+    "additionalProperties": false
+}
