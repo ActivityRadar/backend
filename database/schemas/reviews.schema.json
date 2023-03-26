@@ -1,0 +1,58 @@
+{
+    "title": "Location review document schema",
+    "description": "This document records the details of a location review.",
+    "bsonType": "object",
+    "properties": {
+        "_id": {
+            "description": "A unique identifier for a review",
+            "bsonType": "objectId"
+        },
+        "locationId": {
+            "description": "ID of the reviewed location.",
+            "bsonType": "objectId"
+        },
+        "reviews": {
+            "description": "List of all reviews for that location.",
+            "bsonType": "array",
+            "items": {
+                "description": "Single review information.",
+                "bsonType": "object",
+                "properties": {
+                    "userId": {
+                        "description": "ID of the reviewing user.",
+                        "bsonType": "objectId"
+                    },
+                    "text": {
+                        "description": "Description of the place in prosa.",
+                        "bsonType": "string"
+                    },
+                    "dateTime": {
+                        "description": "Time of the creation or modification.",
+                        "bsonType": "date"
+                    },
+                    "overallRating": {
+                        "description": "Conclusion of the review in points.",
+                        "bsonType": "number"
+                    },
+                    "details": {
+                        "description": "Location specific reviewable properties.",
+                        "bsonType": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "required": [
+                    "userId",
+                    "datetime",
+                    "overallRating"
+                ]
+            }
+        }
+    },
+    "required": [
+        "_id",
+        "locationId",
+        "reviews"
+    ],
+    "additionalProperties": false
+}
+
