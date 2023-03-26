@@ -3,6 +3,10 @@
     "description": "This document records the details of a location review.",
     "bsonType": "object",
     "properties": {
+        "_schemaVersion": {
+            "description": "Version of the used schema.",
+            "bsonType": "int"
+        },
         "_id": {
             "description": "A unique identifier for a review",
             "bsonType": "objectId"
@@ -49,6 +53,7 @@
         }
     },
     "required": [
+        "_schemaVersion",
         "_id",
         "locationId",
         "reviews"

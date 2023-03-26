@@ -3,6 +3,10 @@
     "description": "This document records the details of an offer.",
     "bsonType": "object",
     "properties": {
+        "_schemaVersion": {
+            "description": "Version of the used schema.",
+            "bsonType": "int"
+        },
         "_id": {
             "description": "A unique identifier for an offer.",
             "bsonType": "objectId"
@@ -157,6 +161,7 @@
         }
     },
     "required": [
+        "_schemaVersion",
         "_id",
         "userInfo",
         "location",

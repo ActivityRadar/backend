@@ -3,6 +3,10 @@
     "description": "This document records the details of an activity location.",
     "bsonType": "object",
     "properties": {
+        "_schemaVersion": {
+            "description": "Version of the used schema.",
+            "bsonType": "int"
+        },
         "_id": {
             "description": "A unique identifier for a location",
             "bsonType": "objectId"
@@ -154,6 +158,7 @@
         }
     },
     "required": [
+        "_schemaVersion",
         "_id",
         "location",
         "name",
