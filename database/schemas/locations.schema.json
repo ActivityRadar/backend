@@ -145,6 +145,12 @@
                 ],
                 "maxItems": 3
             }
+        },
+        "rating": {
+            "description": "Average rating of reviews.",
+            "bsonType": "number",
+            "minimum": 1,
+            "maximum": 5
         }
     },
     "required": [
@@ -155,7 +161,8 @@
         "creation",
         "trustScore",
         "tags",
-        "recentReviews"
+        "recentReviews",
+        "rating"
     ],
     "additionalProperties": false
 }
