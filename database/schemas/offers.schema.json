@@ -1,0 +1,171 @@
+{
+    "title": "Activity offer document schema",
+    "description": "This document records the details of an offer.",
+    "bsonType": "object",
+    "properties": {
+        "_id": {
+            "description": "A unique identifier for an offer.",
+            "bsonType": "objectId"
+        },
+        "userInfo": {
+            "description": "Information about the offerer.",
+            "bsonType": "object",
+            "properties": {
+                "userId": {
+                    "description": "ID of the offering user.",
+                    "bsonType": "objectId"
+                },
+                "name": {
+                    "description": "Display name of the offering user.",
+                    "bsonType": "string"
+                },
+                "avatar": {
+                    "description": "Avatar URL of the offering user.",
+                    "bsonType": "string"
+                }
+            },
+            "required": [
+                "userId",
+                "name"
+            ],
+            "additionalProperties": false
+        },
+        "activity": {
+            "description": "Information about what activity is offered.",
+            "bsonType": "array",
+            "minItems": 1,
+            "items": {
+                "description": "A single activity type",
+                "bsonType": "string"
+            }
+        },
+        "location": {
+            "description": "Location information for the offer.",
+            "bsonType": "object",
+            "properties": {
+                "center": {
+                    "description": "Coordinates of the meetup location.",
+                    "bsonType": "object",
+                    "properties": {
+                        "type": {
+                            "description": "GeoJSON type. Will always be 'Point'.",
+                            "bsonType": "string",
+                            "pattern": "Point"
+                        },
+                        "coordinates": {
+                            "description": "Coordinate pair. Longitude, Latitude",
+                            "bsonType": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {
+                                "description": "Single coordinate",
+                                "bsonType": "number"
+                            }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "coordinates"
+                    ],
+                    "additionalProperties": false
+                },
+                "locationId": {
+                    "description": "ID of the chosen location, if available.",
+                    "bsonType": "objectId"
+                },
+                "radius": {
+                    "description": "Offer radius around the center, if no location given.",
+                    "bsonType": "number"
+                }
+            },
+            "required": [
+                "center"
+            ]
+        },
+        "time": {
+            "description": "Information about when to meet up.",
+            "bsonType": "object",
+            "properties": {
+                "type": {
+                    "description": "Type of the offer regarding time.",
+                    "bsonType": "string",
+                    "pattern": "(single|recurring|flexible)"
+                },
+                "times": {
+                    "description": "List of possible times.",
+                    "bsonType": "array",
+                    "items": {
+                        "description": "A single timespan.",
+                        "bsonType": "array",
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "items": {
+                            "oneOf": [
+                                {
+                                    "description": "A single time point as date.",
+                                    "bsonType": "date"
+                                },
+                                {
+                                    "description": "A single time point as string.",
+                                    "bsonType": "string",
+                                    "pattern": "([0-1][0-9]|2[0-3]):[0-5][0-9]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "recurrence": {
+                    "description": "Info about recurring offer.",
+                    "bsonType": "object",
+                    "properties": {
+                        "weekdays": {
+                            "description": "Weekday combination for the offer. Encoded in binary Sunday = 1st bit, Monday = 7th bit, maximum = 2^8-1 = 255",
+                            "bsonType": "int",
+                            "minimum": 1,
+                            "maximum": 255
+                        },
+                        "from": {
+                            "description": "Recurrence start date.",
+                            "bsonType": "date"
+                        },
+                        "until": {
+                            "description": "Recurrence end date.",
+                            "bsonType": "date"
+                        }
+                    },
+                    "required": [
+                        "weekdays"
+                    ]
+                }
+            },
+            "required": [
+                "type"
+            ]
+        },
+        "description": {
+            "description": "Text explaining the offer.",
+            "bsonType": "string"
+        },
+        "creationDate": {
+            "description": "Creation date and time of the offer.",
+            "bsonType": "date"
+        },
+        "status": {
+            "description": "Visibility of the offer.",
+            "bsonType": "string",
+            "pattern": "(open|deleted|closed|archived)"
+        }
+    },
+    "required": [
+        "_id",
+        "userInfo",
+        "location",
+        "activity",
+        "time",
+        "description",
+        "creationDate",
+        "status"
+    ],
+    "additionalProperties": false
+}
+
