@@ -154,6 +154,11 @@
             "description": "Creation date and time of the offer.",
             "bsonType": "date"
         },
+        "visibility": {
+            "description": "For who the offer will be visible.",
+            "bsonType": "string",
+            "pattern": "(friends|public|followers|draft)"
+        },
         "status": {
             "description": "General status of the offer.",
             "bsonType": "string",
@@ -169,6 +174,7 @@
         "time",
         "description",
         "creationDate",
+        "visibility",
         "status"
     ],
     "additionalProperties": false

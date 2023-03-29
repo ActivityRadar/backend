@@ -162,6 +162,11 @@
                 ]
             }
         },
+        "visibility": {
+            "description": "For who the event will be visible.",
+            "bsonType": "string",
+            "pattern": "(friends|public|followers)"
+        },
         "status": {
             "description": "General status of the event.",
             "bsonType": "string",
@@ -177,6 +182,7 @@
         "time",
         "description",
         "creationDate",
+        "visibility",
         "status"
     ],
     "additionalProperties": false
