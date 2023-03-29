@@ -44,7 +44,7 @@
             }
         },
         "location": {
-            "description": "Location information for the offer.",
+            "description": "Location information for the event.",
             "bsonType": "object",
             "properties": {
                 "center": {
@@ -123,7 +123,7 @@
             ]
         },
         "creationDate": {
-            "description": "Creation date and time of the offer.",
+            "description": "Creation date and time of the event.",
             "bsonType": "date"
         },
         "participants": {
@@ -163,7 +163,7 @@
             }
         },
         "status": {
-            "description": "Visibility of the offer.",
+            "description": "General status of the event.",
             "bsonType": "string",
             "pattern": "(open|deleted|closed|archived)"
         }

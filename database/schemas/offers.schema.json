@@ -155,7 +155,7 @@
             "bsonType": "date"
         },
         "status": {
-            "description": "Visibility of the offer.",
+            "description": "General status of the offer.",
             "bsonType": "string",
             "pattern": "(open|deleted|closed|archived)"
         }
