@@ -165,14 +165,11 @@
         "_schemaVersion",
         "_id",
         "location",
-        "name",
-        "photos",
         "activityType",
         "creation",
         "trustScore",
         "tags",
-        "recentReviews",
-        "rating"
+        "recentReviews"
     ],
     "additionalProperties": false
 }
