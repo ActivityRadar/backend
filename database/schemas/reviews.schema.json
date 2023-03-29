@@ -41,12 +41,13 @@
                     "details": {
                         "description": "Location specific reviewable properties.",
                         "bsonType": "object",
+                        "properties": {},
                         "additionalProperties": true
                     }
                 },
                 "required": [
                     "userId",
-                    "datetime",
+                    "dateTime",
                     "overallRating"
                 ]
             }

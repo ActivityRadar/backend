@@ -17,7 +17,7 @@
         },
         "name": {
             "description": "Short description of the location",
-            "bsonType": "string",
+            "bsonType": "string"
         },
         "trustScore": {
             "description": "Score of how trusted the user is by the community.",
@@ -79,7 +79,7 @@
                     "description": "GeoJSON type of the geometry.",
                     "bsonType": "string",
                     "pattern": "(LineString|FeatureCollection)"
-                },
+                }
             },
             "required": [
                 "type"
