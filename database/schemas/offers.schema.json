@@ -83,7 +83,8 @@
                 }
             },
             "required": [
-                "center"
+                "center",
+                "radius"
             ]
         },
         "time": {
