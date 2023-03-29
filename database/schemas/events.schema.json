@@ -1,0 +1,184 @@
+{
+    "title": "Event document schema",
+    "description": "This document records the details of an event.",
+    "bsonType": "object",
+    "properties": {
+        "_schemaVersion": {
+            "description": "Version of the used schema.",
+            "bsonType": "int"
+        },
+        "_id": {
+            "description": "A unique identifier for an event.",
+            "bsonType": "objectId"
+        },
+        "adminInfo": {
+            "description": "Information about the event admin.",
+            "bsonType": "object",
+            "properties": {
+                "userId": {
+                    "description": "ID of the event admin.",
+                    "bsonType": "objectId"
+                },
+                "name": {
+                    "description": "Display name of the event admin.",
+                    "bsonType": "string"
+                },
+                "avatar": {
+                    "description": "Avatar URL of the event admin.",
+                    "bsonType": "string"
+                }
+            },
+            "required": [
+                "userId",
+                "name"
+            ],
+            "additionalProperties": false
+        },
+        "activity": {
+            "description": "Information about what activity the event is about.",
+            "bsonType": "array",
+            "minItems": 1,
+            "items": {
+                "description": "A single activity type",
+                "bsonType": "string"
+            }
+        },
+        "location": {
+            "description": "Location information for the offer.",
+            "bsonType": "object",
+            "properties": {
+                "center": {
+                    "description": "Coordinates of the meetup location.",
+                    "bsonType": "object",
+                    "properties": {
+                        "type": {
+                            "description": "GeoJSON type. Will always be 'Point'.",
+                            "bsonType": "string",
+                            "pattern": "Point"
+                        },
+                        "coordinates": {
+                            "description": "Coordinate pair. Longitude, Latitude",
+                            "bsonType": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {
+                                "description": "Single coordinate",
+                                "bsonType": "number"
+                            }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "coordinates"
+                    ],
+                    "additionalProperties": false
+                },
+                "locationId": {
+                    "description": "ID of the chosen location, if available.",
+                    "bsonType": "objectId"
+                },
+                "radius": {
+                    "description": "Event radius around the location.",
+                    "bsonType": "number"
+                }
+            },
+            "required": [
+                "center"
+            ]
+        },
+        "time": {
+            "description": "Information about when the event takes place.",
+            "bsonType": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+                "description": "A single time stamp.",
+                "bsonType": "date"
+            },
+        },
+        "description": {
+            "description": "Descriptive information about the event."
+            "bsonType": "object",
+            "properties": {
+                "text": {
+                    "description": "Text explaining the event.",
+                    "bsonType": "string"
+                },
+                "picture": {
+                    "description": "URL to a picture used as thumbnail for the event.",
+                    "bsonType": "string"
+                },
+                "minParticipants": {
+                    "description": "Number of participants needed for the event to go through.",
+                    "bsonType": "number"
+                },
+                "maxParticipants": {
+                    "description": "Number of maximum participants that can attend the event.",
+                    "bsonType": "number"
+                }
+            },
+            "required": [
+                "text",
+                "picture"
+            ]
+        },
+        "creationDate": {
+            "description": "Creation date and time of the offer.",
+            "bsonType": "date"
+        },
+        "participants": {
+            "description": "List of participants.",
+            "bsonType": "array",
+            "items": {
+                "description": "Single participant info.",
+                "bsonType": "object",
+                "properties": {
+                    "userId": {
+                        "description": "Participant's user ID.",
+                        "bsonType": "objectId"
+                    },
+                    "avatar": {
+                        "description": "URL to the user's avatar.",
+                        "bsonType": "string"
+                    },
+                    "signupDate": {
+                        "description": "Time of signing up to the event.",
+                        "bsonType": "date"
+                    },
+                    "additionalParticipants": {
+                        "description": "Number of extra persons accompanied by this user.",
+                        "bsonType": "number"
+                    },
+                    "status": {
+                        "description": "Info whether the participant cancelled, showed up or brought as many extras as signed up.",
+                        "bsonType": "string",
+                        "pattern": "(signed-up|cancelled|didnt-show|showed-up|extras-didnt-match)"
+                    }
+                },
+                "required": [
+                    "userId",
+                    "signupDate",
+                    "status"
+                ]
+            }
+        },
+        "status": {
+            "description": "Visibility of the offer.",
+            "bsonType": "string",
+            "pattern": "(open|deleted|closed|archived)"
+        }
+    },
+    "required": [
+        "_schemaVersion",
+        "_id",
+        "adminInfo",
+        "location",
+        "activity",
+        "time",
+        "description",
+        "creationDate",
+        "status"
+    ],
+    "additionalProperties": false
+}
+
