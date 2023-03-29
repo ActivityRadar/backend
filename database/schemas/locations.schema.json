@@ -23,6 +23,10 @@
             "description": "Score of how trusted the user is by the community.",
             "bsonType": "int"
         },
+        "activityType": {
+            "description": "Type of activity to be done at the location.",
+            "bsonType": "string"
+        },
         "creation": {
             "description": "Creation information.",
             "bsonType": "object",
@@ -163,6 +167,7 @@
         "location",
         "name",
         "photos",
+        "activityType",
         "creation",
         "trustScore",
         "tags",
