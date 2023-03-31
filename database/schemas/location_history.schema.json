@@ -1,0 +1,121 @@
+{
+    "title": "Location change history schema",
+    "description": "This document records the details of location changes.",
+    "bsonType": "object",
+    "properties": {
+        "_schemaVersion": {
+            "description": "Version of the used schema.",
+            "bsonType": "int"
+        },
+        "_id": {
+            "description": "The identifier of the location.",
+            "bsonType": "objectId"
+        },
+        "changesets": {
+            "description": "List of all changes to the location.",
+            "bsonType": "array",
+            "items": {
+                "description": "Single changeset information.",
+                "bsonType": "object",
+                "properties": {
+                    "userId": {
+                        "description": "ID of the changing user.",
+                        "bsonType": "objectId"
+                    },
+                    "version": {
+                        "description": "ID of the changing user.",
+                        "bsonType": "objectId"
+                    },
+                    "description": {
+                        "description": "Reason behind the change.",
+                        "bsonType": "string"
+                    },
+                    "dateTime": {
+                        "description": "Time of the change.",
+                        "bsonType": "date"
+                    },
+                    "changes": {
+                        "description": "Change list of the changeset.",
+                        "bsonType": "array",
+                        "items": {
+                            "description": "Single change as a diff (before and after).",
+                            "bsonType": "object",
+                            "properties": {
+                                "key": {
+                                    "description": "Key of the changed property.",
+                                    "bsonType": "string",
+                                    "pattern": "(tags\..*|geometry|location|activityType|name|_schemaVersion)"
+                                },
+                                "property": {
+                                    "description": "Example of a diff for a changed object property.",
+                                    "bsonType": "object",
+                                    "properties": {
+                                        "before": {
+                                            "description": "Property value before."
+                                        },
+                                        "after": {
+                                            "description": "Property value after."
+                                        },
+                                        "removed": {
+                                            "description": "Property removed. Needs 'before' to be set.",
+                                            "bsonType": "bool"
+                                        },
+                                        "added": {
+                                            "description": "Value added. Needs 'after' to be set.",
+                                            "bsonType": "bool"
+                                        }
+                                    }
+                                },
+                                "arrayEntry": {
+                                    "description": "Example of a diff for a changed array entry.",
+                                    "bsonType": "object",
+                                    "properties": {
+                                        "replaced": {
+                                            "description": "Array entry replacement.",
+                                            "bsonType": "object",
+                                            "properties": {
+                                                "before": {
+                                                    "description": "Entry value before"
+                                                },
+                                                "after": {
+                                                    "description": "Entry value after"
+                                                }
+                                            },
+                                            "required": [
+                                                "before",
+                                                "after"
+                                            ]
+                                        },
+                                        "added": {
+                                            "description": "New array entry."
+                                        },
+                                        "removed": {
+                                            "description": "Removed array entry."
+                                        }
+                                    }
+                                }
+                            },
+                            "additionalProperties": true
+                        }
+                    }
+                },
+                "required": [
+                    "userId",
+                    "version",
+                    "description",
+                    "dateTime",
+                    "changes"
+                ],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": [
+        "_schemaVersion",
+        "_id",
+        "changesets"
+    ],
+    "additionalProperties": false
+}
+
+
