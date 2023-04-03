@@ -28,7 +28,7 @@
             "bsonType": "string"
         },
         "creation": {
-            "description": "Creation information.",
+            "description": "Creation information or when the data was introduced in our database.",
             "bsonType": "object",
             "properties": {
                 "createdBy": {
@@ -49,6 +49,10 @@
                 "createdBy",
                 "date"
             ]
+        },
+        "lastModified": {
+            "description": "Date of when the location was last modified.",
+            "bsonType": "date"
         },
         "location": {
             "description": "Physical center of the location.",
@@ -167,6 +171,7 @@
         "location",
         "activityType",
         "creation",
+        "lastModified",
         "trustScore",
         "tags",
         "recentReviews"
