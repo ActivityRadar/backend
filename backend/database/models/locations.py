@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Any, Optional
-# from uuid import UUID
 
 from beanie import Document, Link
 from pydantic import BaseModel

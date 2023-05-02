@@ -3,10 +3,10 @@ import asyncio
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from backend.database.models.locations import LocationDetailed, LocationHistory, LocationShort
-from backend.database.models.offers import Offer
-from backend.database.models.shared import Review
-from backend.database.models.users import User
+from .models.locations import LocationDetailed, LocationHistory, LocationShort
+from .models.offers import Offer
+from .models.shared import Review
+from .models.users import User
 
 client = AsyncIOMotorClient("mongodb://user:pass@host:27017")
 

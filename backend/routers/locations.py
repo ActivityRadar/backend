@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 
 from backend.database.models.shared import Review
 
-from ..database.models.locations import Location
+from ..database.models.locations import LocationDetailed, LocationShort
 
 from ..util.types import LongitudeCoordinate, LatitudeCoordinate
 
@@ -20,7 +20,7 @@ def get_locations_by_bbox(
         south: LatitudeCoordinate,
         east: LongitudeCoordinate,
         north: LatitudeCoordinate,
-        activities: list[str] | None = Query(None)) -> list[Location]:
+        activities: list[str] | None = Query(None)) -> list[LocationShort]:
     return []
     # return {
     #     "bbox": [west, south, east, north],
@@ -32,7 +32,7 @@ def get_locations_around(
         long: LongitudeCoordinate,
         lat: LatitudeCoordinate,
         radius: Annotated[float, "Distance in km"],
-        activities: list[str] | None = Query(None)) -> list[Location]:
+        activities: list[str] | None = Query(None)) -> list[LocationDetailed]:
     return []
     # return {
     #     "center": [long, lat],
@@ -41,7 +41,7 @@ def get_locations_around(
     # }
 
 @router.get("/{location_id}")
-def get_location(location_id: int, q: str | None = None) -> Location:
+def get_location(location_id: int, q: str | None = None) -> LocationDetailed:
     return None
     # return {"location_id": location_id, "q": q}
 
