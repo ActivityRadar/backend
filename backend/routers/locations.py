@@ -74,6 +74,13 @@ review_router = APIRouter(
     tags = ["reviews"]
 )
 
+@review_router.get("/")
+def get_reviews(location_id: int, start: int, n: int) -> list[Review]:
+    """
+    Get `n` reviews starting from the `start`th entry.
+    """
+    return []
+
 @review_router.post("/")
 def create_review(location_id: int, data: dict):
     # error if location not found
