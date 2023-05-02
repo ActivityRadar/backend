@@ -1,9 +1,12 @@
 from typing import Annotated
 from fastapi import APIRouter, Query
+from beanie import PydanticObjectId
+from fastapi import APIRouter, HTTPException, Query
 
 from backend.database.models.shared import Review
 
 from ..database.models.locations import LocationDetailed, LocationShort
+from ..database.service.locations import LocationService
 
 from ..util.types import LongitudeCoordinate, LatitudeCoordinate
 
@@ -13,6 +16,7 @@ router = APIRouter(
 )
 
 #### Locations
+location_service = LocationService()
 
 @router.get("/bbox")
 def get_locations_by_bbox(
@@ -41,9 +45,12 @@ def get_locations_around(
     # }
 
 @router.get("/{location_id}")
-def get_location(location_id: int, q: str | None = None) -> LocationDetailed:
-    return None
-    # return {"location_id": location_id, "q": q}
+async def get_location(location_id: PydanticObjectId) -> LocationDetailed:
+    print(type(location_id))
+    result = await location_service.get(location_id)
+    if result is None:
+        raise HTTPException(404, detail=f"No location with {location_id=} exists!")
+    return result
 
 @router.post("/")
 def create_new_location(new_data: dict):
