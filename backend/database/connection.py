@@ -1,3 +1,5 @@
+import os
+
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -6,7 +8,7 @@ from .models.offers import Offer
 from .models.shared import Review
 from .models.users import User
 
-client = AsyncIOMotorClient("mongodb://user:pass@host:27017")
+client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STIRNG"))
 
 async def init():
     await init_beanie(database=client.AR, document_models=[User])

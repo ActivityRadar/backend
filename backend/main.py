@@ -1,7 +1,10 @@
+import dotenv
 from fastapi import FastAPI
 
 from .database.connection import init as init_db
 from .routers import users, offers, locations
+
+dotenv.load_dotenv()
 
 app = FastAPI()
 

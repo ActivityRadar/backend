@@ -45,7 +45,6 @@ def get_locations_around(
 
 @router.get("/{location_id}")
 async def get_location(location_id: PydanticObjectId) -> LocationDetailed:
-    print(type(location_id))
     result = await location_service.get(location_id)
     if result is None:
         raise HTTPException(404, detail=f"No location with {location_id=} exists!")
