@@ -1,11 +1,11 @@
-from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
+from beanie import Document
 
 from pydantic import BaseModel
 
-from backend.util.types import LongLat
+from backend.util.types import Datetime, LongLat
 
 class LocationCreators(Enum):
     OSM = "OSM",
@@ -13,18 +13,18 @@ class LocationCreators(Enum):
 
 class CreationInfo(BaseModel):
     created_by: LocationCreators
-    date: datetime
+    date: Datetime
     user_id: Optional[UUID]
 
 class PhotoInfo(BaseModel):
     user_id: UUID
     url: str
-    creation_date: datetime
+    creation_date: Datetime
 
 class Review(Document):
     user_id: UUID
     text: str
-    creation_date: datetime
+    creation_date: Datetime
     overall_rating: float
     details: dict[str, Any]
 
