@@ -21,7 +21,7 @@ class PhotoInfo(BaseModel):
     url: str
     creation_date: datetime
 
-class Review(BaseModel):
+class Review(Document):
     user_id: UUID
     text: str
     creation_date: datetime

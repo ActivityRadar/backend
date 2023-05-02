@@ -42,7 +42,7 @@ class LocationShort(Document, SimpleLocationInfo):
                        name="location_index_GEO")
         ]
 
-class LocationHistory():
+class LocationHistory(Document):
     pass
 
 
