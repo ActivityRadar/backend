@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from backend.util.types import Datetime, LongLat
 
 class LocationCreators(Enum):
-    OSM = "OSM",
+    OSM = "OSM"
     APP = "APP"
 
 class CreationInfo(BaseModel):
