@@ -1,6 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Query
 
+from backend.database.models.shared import Review
+
+from ..database.models.locations import Location
+
 from ..util.types import LongitudeCoordinate, LatitudeCoordinate
 
 router = APIRouter(
@@ -16,27 +20,30 @@ def get_locations_by_bbox(
         south: LatitudeCoordinate,
         east: LongitudeCoordinate,
         north: LatitudeCoordinate,
-        activities: list[str] | None = Query(None)):
-    return {
-        "bbox": [west, south, east, north],
-        "activities": activities or "all"
-    }
+        activities: list[str] | None = Query(None)) -> list[Location]:
+    return []
+    # return {
+    #     "bbox": [west, south, east, north],
+    #     "activities": activities or "all"
+    # }
 
 @router.get("/around")
 def get_locations_around(
         long: LongitudeCoordinate,
         lat: LatitudeCoordinate,
         radius: Annotated[float, "Distance in km"],
-        activities: list[str] | None = Query(None)):
-    return {
-        "center": [long, lat],
-        "radius": radius or 0.0,
-        "activities": activities or "all"
-    }
+        activities: list[str] | None = Query(None)) -> list[Location]:
+    return []
+    # return {
+    #     "center": [long, lat],
+    #     "radius": radius or 0.0,
+    #     "activities": activities or "all"
+    # }
 
 @router.get("/{location_id}")
-def get_location(location_id: int, q: str | None = None):
-    return {"location_id": location_id, "q": q}
+def get_location(location_id: int, q: str | None = None) -> Location:
+    return None
+    # return {"location_id": location_id, "q": q}
 
 @router.post("/")
 def create_new_location(new_data: dict):
