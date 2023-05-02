@@ -1,16 +1,15 @@
 from fastapi import FastAPI, Query
 
-from .routers import users, offers, locations, events
+from .database.connection import init as init_db
+from .routers import users, offers, locations
 
 app = FastAPI()
 
-app.include_router(locations.router)
-app.include_router(users.router)
-app.include_router(offers.router)
-# app.include_router(events.router)
+@app.on_event("startup")
+async def startup():
+    await init_db()
 
-
-#### Offers and events
-
-
-
+    app.include_router(locations.router)
+    app.include_router(users.router)
+    app.include_router(offers.router)
+    # app.include_router(events.router)
