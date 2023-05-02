@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 
 from .database.connection import init as init_db
 from .routers import users, offers, locations
