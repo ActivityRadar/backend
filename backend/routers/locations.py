@@ -34,7 +34,7 @@ def get_locations_around(
         long: LongitudeCoordinate,
         lat: LatitudeCoordinate,
         radius: Annotated[float, "Distance in km"],
-        activities: list[str] | None = Query(None)) -> list[LocationDetailed]:
+        activities: list[str] | None = Query(None)) -> list[LocationDetailedAPI]:
     return []
     # return {
     #     "center": [long, lat],
@@ -43,11 +43,11 @@ def get_locations_around(
     # }
 
 @router.get("/{location_id}")
-async def get_location(location_id: PydanticObjectId) -> LocationDetailed:
+async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
     result = await location_service.get(location_id)
     if result is None:
         raise HTTPException(404, detail=f"No location with {location_id=} exists!")
-    return result
+    return LocationDetailedAPI(**result.dict())
 
 @router.post("/")
 def create_new_location(new_data: dict):
