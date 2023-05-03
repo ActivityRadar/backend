@@ -1,14 +1,17 @@
 from beanie import PydanticObjectId
-from beanie.operators import Box, In
+from beanie.operators import Box, In, NearSphere
 
 from backend.database.models.locations import LocationDetailedDB, LocationShortDB
-from backend.util.types import BoundingBox
+from backend.util.types import BoundingBox, LongLat
 
 class LocationService:
     def __init__(self) -> None:
         # take care, the ODM classes might not have been initialized by beanie yet...
         # print(dir(LocationDetailed.find_all()))
         return
+
+    def get_activities_filter(self, activities):
+        return In(LocationShortDB.activity_type, activities)
 
     def insert(self, location: LocationDetailedDB):
         self.check_possible_duplicate(location)
@@ -23,7 +26,17 @@ class LocationService:
             # Box(LocationShort.location, lower_left=bbox[0], upper_right=bbox[1])
         ]
         if activities is not None:
-            filters.append(In(LocationShortDB.activity_type, activities))
+            filters.append(self.get_activities_filter(activities))
+
+        return await LocationShortDB.find_many(*filters).to_list()
+
+    async def get_around(self, center: LongLat, radius: float, activities: list[str] | None) -> list[LocationShortDB]:
+        if radius == 0.0:
+            return []
+
+        filters = [NearSphere(LocationShortDB.location, center[0], center[1], max_distance=radius)]
+        if activities is not None:
+            filters.append(self.get_activities_filter(activities))
 
         return await LocationShortDB.find_many(*filters).to_list()
 

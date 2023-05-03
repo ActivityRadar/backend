@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database.models.shared import Review
 
-from ..database.models.locations import LocationDetailedAPI, LocationDetailedDB, LocationShortDB, LocationShortAPI
+from ..database.models.locations import LocationDetailedAPI, LocationShortDB, LocationShortAPI
 from ..database.service.locations import LocationService
 
 from ..util.types import LongitudeCoordinate, LatitudeCoordinate
@@ -30,17 +30,15 @@ async def get_locations_by_bbox(
     return result
 
 @router.get("/around")
-def get_locations_around(
+async def get_locations_around(
         long: LongitudeCoordinate,
         lat: LatitudeCoordinate,
         radius: Annotated[float, "Distance in km"],
-        activities: list[str] | None = Query(None)) -> list[LocationDetailedAPI]:
-    return []
-    # return {
-    #     "center": [long, lat],
-    #     "radius": radius or 0.0,
-    #     "activities": activities or "all"
-    # }
+        activities: list[str] | None = Query(None)) -> list[LocationShortAPI]:
+    center = (long, lat)
+    short = await location_service.get_around(center, radius, activities)
+    result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
+    return result
 
 @router.get("/{location_id}")
 async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
