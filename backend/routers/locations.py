@@ -18,17 +18,15 @@ router = APIRouter(
 location_service = LocationService()
 
 @router.get("/bbox")
-def get_locations_by_bbox(
+async def get_locations_by_bbox(
         west: LongitudeCoordinate,
         south: LatitudeCoordinate,
         east: LongitudeCoordinate,
         north: LatitudeCoordinate,
         activities: list[str] | None = Query(None)) -> list[LocationShort]:
-    return []
-    # return {
-    #     "bbox": [west, south, east, north],
-    #     "activities": activities or "all"
-    # }
+    bbox = ((west, south), (east, north))
+    result = await location_service.get_bbox_short(bbox, activities)
+    return result
 
 @router.get("/around")
 def get_locations_around(

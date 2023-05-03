@@ -1,5 +1,8 @@
 from beanie import PydanticObjectId
+from beanie.operators import Box, In
+
 from backend.database.models.locations import LocationDetailed, LocationShort
+from backend.util.types import BoundingBox
 
 class LocationService:
     def __init__(self) -> None:
@@ -13,8 +16,16 @@ class LocationService:
     async def get(self, id: PydanticObjectId) -> LocationDetailed | None:
         return await LocationDetailed.get(id)
 
-    def get_bbox_short(self, bbox) -> list[LocationShort]:
-        pass
+    async def get_bbox_short(self, bbox: BoundingBox, activities: list[str] | None) -> list[LocationShort]:
+        filters = [
+            { "location": { "$geoWithin": { "$box":  bbox }}}
+            # TODO: When PR https://github.com/roman-right/beanie/pull/552 merged, use this line instead
+            # Box(LocationShort.location, lower_left=bbox[0], upper_right=bbox[1])
+        ]
+        if activities is not None:
+            filters.append(In(LocationShort.activity_type, activities))
+
+        return await LocationShort.find_many(*filters).to_list()
 
     def check_possible_duplicate(self, location: LocationDetailed) -> None | list[LocationDetailed]:
         return None
