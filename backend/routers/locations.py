@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database.models.shared import Review
 
-from ..database.models.locations import LocationDetailed, LocationShort
+from ..database.models.locations import LocationDetailedAPI, LocationDetailedDB, LocationShortDB, LocationShortAPI
 from ..database.service.locations import LocationService
 
 from ..util.types import LongitudeCoordinate, LatitudeCoordinate
@@ -23,9 +23,10 @@ async def get_locations_by_bbox(
         south: LatitudeCoordinate,
         east: LongitudeCoordinate,
         north: LatitudeCoordinate,
-        activities: list[str] | None = Query(None)) -> list[LocationShort]:
+        activities: list[str] | None = Query(None)) -> list[LocationShortAPI]:
     bbox = ((west, south), (east, north))
-    result = await location_service.get_bbox_short(bbox, activities)
+    short: list[LocationShortDB] = await location_service.get_bbox_short(bbox, activities)
+    result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
     return result
 
 @router.get("/around")

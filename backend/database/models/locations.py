@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from beanie import Document, Link
 from pydantic import BaseModel
@@ -7,20 +7,24 @@ from pymongo import IndexModel, GEOSPHERE
 
 from .shared import CreationInfo, GeoJSONLocation, GeoJSONObject, PhotoInfo, Review
 
-class SimpleLocationInfo(BaseModel):
-    name: str | None
-    trust_score: int
+class LocationBase(BaseModel):
     activity_type: str
     location: GeoJSONLocation
 
-class LocationDetailed(Document, SimpleLocationInfo):
-    osm_id: int
-    creation: CreationInfo
-    last_modified: datetime
+class LocationShort(LocationBase):
+    name: str | None
+    trust_score: int
+
+class LocationDetailed(LocationShort):
     tags: dict[str, Any]
     recent_reviews: list[Review]
     geometry: GeoJSONObject | None
     photos: list[PhotoInfo] | None
+
+class LocationDetailedDB(Document, LocationDetailed):
+    osm_id: int
+    creation: CreationInfo
+    last_modified: datetime
 
     class Settings:
         name = "locations"
@@ -31,8 +35,8 @@ class LocationDetailed(Document, SimpleLocationInfo):
                        name="location_index_GEO")
         ]
 
-class LocationShort(Document, SimpleLocationInfo):
-    detailed: Link[LocationDetailed]
+class LocationShortDB(Document, LocationShort):
+    detailed: Link[LocationDetailedDB]
 
     class Settings:
         name = "simple_locations"
@@ -42,7 +46,12 @@ class LocationShort(Document, SimpleLocationInfo):
                        name="location_index_GEO")
         ]
 
+class LocationShortAPI(LocationBase):
+    ...
+
+class LocationDetailedAPI(LocationDetailed):
+    ...
+
 class LocationHistory(Document):
     pass
-
 

@@ -14,7 +14,7 @@ import overpass
 sys.path.append("../../")
 
 from backend.database.connection import client
-from backend.database.models.locations import LocationDetailed, LocationShort
+from backend.database.models.locations import LocationDetailedDB, LocationShortDB
 from backend.database.models.shared import LocationCreators
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
@@ -23,8 +23,8 @@ load_dotenv()
 client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STRING"))
 
 async def init_db():
-    await init_beanie(database=client.AR, document_models=[LocationDetailed])
-    await init_beanie(database=client.AR, document_models=[LocationShort])
+    await init_beanie(database=client.AR, document_models=[LocationDetailedDB])
+    await init_beanie(database=client.AR, document_models=[LocationShortDB])
 
 def merge(geometries, centers):
     """ Merge center GeoJSON data into geometries as "center" key
@@ -108,15 +108,15 @@ def osm_to_mongo(loc):
 
 async def insert_all(elements):
     es = [osm_to_mongo(e) for e in elements]
-    detailed = [LocationDetailed(**e) for e in es]
-    ds = await LocationDetailed.insert_many(detailed)
+    detailed = [LocationDetailedDB(**e) for e in es]
+    ds = await LocationDetailedDB.insert_many(detailed)
 
-    short = [LocationShort(detailed=d, **e) for (e, d)  in zip(es, ds.inserted_ids)]
-    await LocationShort.insert_many(short)
+    short = [LocationShortDB(detailed=d, **e) for (e, d)  in zip(es, ds.inserted_ids)]
+    await LocationShortDB.insert_many(short)
 
 async def reset_collections():
-    await LocationShort.find({}).delete()
-    await LocationDetailed.find({}).delete()
+    await LocationShortDB.find({}).delete()
+    await LocationDetailedDB.find({}).delete()
 
 async def main():
     await init_db()
