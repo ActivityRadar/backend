@@ -22,9 +22,9 @@ class LocationDetailed(LocationShort):
     photos: list[PhotoInfo] | None
 
 class LocationDetailedDB(Document, LocationDetailed):
-    osm_id: int
     creation: CreationInfo
     last_modified: datetime
+    osm_id: int | None = None
 
     class Settings:
         name = "locations"
