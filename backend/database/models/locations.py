@@ -36,8 +36,6 @@ class LocationDetailedDB(Document, LocationDetailed):
         ]
 
 class LocationShortDB(Document, LocationShort):
-    detailed: PydanticObjectId
-
     class Settings:
         name = "simple_locations"
         indexes = [

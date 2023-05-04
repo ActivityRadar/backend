@@ -111,7 +111,7 @@ async def insert_all(elements):
     detailed = [LocationDetailedDB(**e) for e in es]
     ds = await LocationDetailedDB.insert_many(detailed)
 
-    short = [LocationShortDB(detailed=d, **e) for (e, d)  in zip(es, ds.inserted_ids)]
+    short = [LocationShortDB(**e, id=d) for (e, d)  in zip(es, ds.inserted_ids)]
     await LocationShortDB.insert_many(short)
 
 async def reset_collections():
