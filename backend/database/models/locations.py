@@ -45,7 +45,7 @@ class LocationShortDB(Document, LocationShort):
         ]
 
 class LocationShortAPI(LocationBase):
-    ...
+    id: PydanticObjectId
 
 class LocationDetailedAPI(LocationDetailed):
     ...
