@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from beanie import Document, Link
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
 from pymongo import IndexModel, GEOSPHERE
 
@@ -36,7 +36,7 @@ class LocationDetailedDB(Document, LocationDetailed):
         ]
 
 class LocationShortDB(Document, LocationShort):
-    detailed: Link[LocationDetailedDB]
+    detailed: PydanticObjectId
 
     class Settings:
         name = "simple_locations"

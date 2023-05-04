@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
-from beanie import Document
 
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
 
 from backend.util.types import Datetime, LongLat
@@ -14,10 +14,10 @@ class LocationCreators(Enum):
 class CreationInfo(BaseModel):
     created_by: LocationCreators
     date: Datetime
-    user_id: Optional[UUID]
+    user_id: Optional[PydanticObjectId]
 
 class PhotoInfo(BaseModel):
-    user_id: UUID
+    user_id: PydanticObjectId
     url: str
     creation_date: Datetime
 
