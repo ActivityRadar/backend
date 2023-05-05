@@ -29,28 +29,29 @@ class LocationService:
         return await LocationDetailedDB.get(id)
 
     async def get_bbox_short(self, bbox: BoundingBox, activities: list[str] | None) -> list[LocationShortDB]:
-        filters = [
-            { "location": { "$geoWithin": { "$box":  bbox }}}
-            # TODO: When PR https://github.com/roman-right/beanie/pull/552 merged, use this line instead
-            # Box(LocationShort.location, lower_left=bbox[0], upper_right=bbox[1])
-        ]
-        if activities is not None:
-            filters.append(self.get_activities_filter(activities))
-
-        return await LocationShortDB.find_many(*filters).to_list()
+        return await self.find_with_filters({ "location": { "$geoWithin": { "$box":  bbox }}}, activities=activities)
+        # TODO: When PR https://github.com/roman-right/beanie/pull/552 merged, use these lines instead
+        # return await self.find_with_filters(
+        #   Box(LocationShort.location, lower_left=bbox[0], upper_right=bbox[1]),
+        #   activities=activities
+        # )
 
     async def get_around(self, center: LongLat, radius: float, activities: list[str] | None) -> list[LocationShortDB]:
         if radius == 0.0:
             return []
 
-        filters = [NearSphere(LocationShortDB.location, center[0], center[1], max_distance=radius)]
+        return await self.find_with_filters(
+            NearSphere(LocationShortDB.location, center[0], center[1], max_distance=radius),
+            activities=activities
+        )
+
+    async def find_with_filters(self, *filters, activities: list[str] | None):
+        filters = list(filters)
         if activities is not None:
             filters.append(self.get_activities_filter(activities))
 
         return await LocationShortDB.find_many(*filters).to_list()
 
-    def check_possible_duplicate(self, location: LocationDetailedDB) -> None | list[LocationDetailedDB]:
+    def check_possible_duplicate(self, location: LocationDetailed) -> None | list[LocationDetailed]:
         return None
-
-
 
