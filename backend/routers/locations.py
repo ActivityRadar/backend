@@ -67,7 +67,8 @@ async def create_new_location(info: LocationNew):
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(**info.dict(), recent_reviews=[], trust_score=trust_score)
-    await location_service.insert(detailed, user_id)
+    new_id = await location_service.insert(detailed, user_id)
+    return { "id": new_id }
 
 @router.put("/{location_id}")
 def update_location(location_id: int):

@@ -16,14 +16,13 @@ class LocationService:
     def get_activities_filter(self, activities):
         return In(LocationShortDB.activity_type, activities)
 
-    async def insert(self, location: LocationDetailed, user_id: PydanticObjectId):
+    async def insert(self, location: LocationDetailed, user_id: PydanticObjectId) -> PydanticObjectId:
         self.check_possible_duplicate(location)
 
         creation = CreationInfo(created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id)
-        loc = LocationDetailedDB(**location.dict(), last_modified=creation.date, creation=creation)
-        res = await loc.insert()
-        short = LocationShortDB(**res.dict())
-        await short.insert()
+        loc = await LocationDetailedDB(**location.dict(), last_modified=creation.date, creation=creation).insert()
+        await LocationShortDB(**loc.dict()).insert()
+        return loc.id
 
     async def get(self, id: PydanticObjectId) -> LocationDetailedDB | None:
         return await LocationDetailedDB.get(id)
