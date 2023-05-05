@@ -44,6 +44,12 @@ class LocationShortDB(Document, LocationShort):
                        name="location_index_GEO")
         ]
 
+class LocationNew(LocationBase):
+    name: str | None = None
+    photos: list[PhotoInfo] = []
+    tags: dict[str, Any] = {}
+    geometry: GeoJSONObject | None = None
+
 class LocationShortAPI(LocationBase):
     id: PydanticObjectId
 

@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from beanie import PydanticObjectId
 from beanie.operators import Box, In, NearSphere
 
-from backend.database.models.locations import LocationDetailedDB, LocationShortDB
+from backend.database.models.locations import LocationDetailed, LocationDetailedDB, LocationShortDB
+from backend.database.models.shared import CreationInfo, LocationCreators
 from backend.util.types import BoundingBox, LongLat
 
 class LocationService:
@@ -13,8 +16,14 @@ class LocationService:
     def get_activities_filter(self, activities):
         return In(LocationShortDB.activity_type, activities)
 
-    def insert(self, location: LocationDetailedDB):
+    async def insert(self, location: LocationDetailed, user_id: PydanticObjectId):
         self.check_possible_duplicate(location)
+
+        creation = CreationInfo(created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id)
+        loc = LocationDetailedDB(**location.dict(), last_modified=creation.date, creation=creation)
+        res = await loc.insert()
+        short = LocationShortDB(**res.dict())
+        await short.insert()
 
     async def get(self, id: PydanticObjectId) -> LocationDetailedDB | None:
         return await LocationDetailedDB.get(id)
