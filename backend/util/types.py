@@ -26,3 +26,8 @@ TimeSlotFlexible = tuple[Time, Time]
 # A type for time pairs like 2023-03-31T12:30:00 - 2023-03-31T14:30:00
 TimeSlotFixed = tuple[Datetime, Datetime]
 
+
+### Trust scores
+TrustScore = int
+UserTrustScore = TrustScore
+LocationTrustScore = TrustScore
