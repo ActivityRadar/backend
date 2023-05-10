@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any, Optional
 
 from beanie import Document
 from pydantic import IPvAnyAddress
@@ -9,9 +8,8 @@ from .shared import BasicUserInfo, GeoJSONLocation
 
 class User(Document, BasicUserInfo):
     trust_score: int
-    ip_address: Optional[IPvAnyAddress]
+    ip_address: IPvAnyAddress | None
     creation_date: datetime
-    last_location: Optional[GeoJSONLocation]
     authentication: Any
 
     """
@@ -34,6 +32,7 @@ class User(Document, BasicUserInfo):
                 }
             },
     """
+    last_location: GeoJSONLocation | None
 
     class Settings:
         name = "users"

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 from beanie import Document
@@ -28,8 +27,8 @@ class OfferStatus(str, Enum):
 
 class OfferLocation(BaseModel):
     center: GeoJSONLocation
-    location_id: Optional[UUID]
-    radius: Optional[float]
+    location_id: UUID | None
+    radius: float | None
 
 class Recurrence(BaseModel):
     weekdays: int # encoded as binary number, 255 combinations of weekdays
@@ -37,8 +36,8 @@ class Recurrence(BaseModel):
 
 class OfferTime(BaseModel):
     type: OfferType
-    times: Optional[list[TimeSlotFlexible | TimeSlotFixed]]
-    recurrence: Optional[Recurrence]
+    times: list[TimeSlotFlexible | TimeSlotFixed] | None
+    recurrence: Recurrence | None
 
 class Offer(Document):
     user_info: BasicUserInfo

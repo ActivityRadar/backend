@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from beanie import Document, PydanticObjectId
@@ -14,7 +14,7 @@ class LocationCreators(Enum):
 class CreationInfo(BaseModel):
     created_by: LocationCreators
     date: Datetime
-    user_id: Optional[PydanticObjectId]
+    user_id: PydanticObjectId | None
 
 class PhotoInfo(BaseModel):
     user_id: PydanticObjectId
@@ -45,5 +45,5 @@ GeoJSONObject = GeoJSONLocation | GeoJSONLine | GeoJSONFeatureCollection
 class BasicUserInfo(BaseModel):
     username: str
     display_name: str
-    avatar: Optional[PhotoInfo]
+    avatar: PhotoInfo | None
 
