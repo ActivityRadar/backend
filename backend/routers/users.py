@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+
+from backend.database.models.users import UserIn
+from backend.database.service.users import UserService
 
 router = APIRouter(
     prefix = "/users",
@@ -8,6 +11,8 @@ router = APIRouter(
 me_router = APIRouter(
     prefix = "/me"
 )
+
+user_service = UserService()
 
 @me_router.get("/")
 def get_this_user():
@@ -25,8 +30,13 @@ def update_user(data: dict):
 router.include_router(router)
 
 @router.post("/")
-def create_user(data: dict):
-    return {"user_id": 0}
+async def create_user(user_info: UserIn):
+    try:
+        u_id = await user_service.create_user(user_info)
+    except:
+        raise HTTPException(400, "User with name exists!")
+
+    return { "id": u_id }
 
 @router.get("/{user_id}")
 def get_user_info(user_id: int):
