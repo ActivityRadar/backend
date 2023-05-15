@@ -16,8 +16,7 @@ sys.path.append("../../")
 from backend.database.connection import client
 from backend.database.models.locations import LocationDetailedDB, LocationShortDB
 from backend.database.models.shared import LocationCreators
-
-DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
+from backend.util.constants import DATE_FMT
 
 load_dotenv()
 client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STRING"))
