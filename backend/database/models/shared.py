@@ -42,7 +42,7 @@ class GeoJSONFeatureCollection(BaseModel):
 
 GeoJSONObject = GeoJSONLocation | GeoJSONLine | GeoJSONFeatureCollection
 
-class BasicUserInfo(BaseModel):
+class UserBase(BaseModel):
     username: str
     display_name: str
     avatar: PhotoInfo | None

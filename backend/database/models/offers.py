@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pymongo import DESCENDING, IndexModel, GEOSPHERE
 
 from ...util.types import Datetime, TimeSlotFixed, TimeSlotFlexible
-from .shared import BasicUserInfo, GeoJSONLocation
+from .shared import UserBase, GeoJSONLocation
 
 class OfferType(str, Enum):
     SINGLE = "single"
@@ -40,7 +40,7 @@ class OfferTime(BaseModel):
     recurrence: Recurrence | None
 
 class Offer(Document):
-    user_info: BasicUserInfo
+    user_info: UserBase
     activity: list[str]
     location: OfferLocation
     time: OfferTime

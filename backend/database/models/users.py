@@ -4,9 +4,9 @@ from beanie import Document
 from pydantic import IPvAnyAddress
 from pymongo import GEOSPHERE, IndexModel
 
-from .shared import BasicUserInfo, GeoJSONLocation
+from .shared import UserBase, GeoJSONLocation
 
-class User(Document, BasicUserInfo):
+class User(Document, UserBase):
     trust_score: int
     ip_address: IPvAnyAddress | None
     creation_date: datetime
@@ -42,3 +42,10 @@ class User(Document, BasicUserInfo):
             IndexModel([("last_location", GEOSPHERE)],
                        name="last_location_index_GEO")
         ]
+
+class UserAPI(UserBase):
+    ...
+
+class UserIn(UserBase):
+    email: str
+    password: str
