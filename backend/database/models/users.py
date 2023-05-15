@@ -1,38 +1,30 @@
 from datetime import datetime
+from enum import Enum
 
 from beanie import Document
-from pydantic import IPvAnyAddress
+from pydantic import BaseModel, IPvAnyAddress
 from pymongo import GEOSPHERE, IndexModel
 
 from .shared import UserBase, GeoJSONLocation
 
+
+class AuthType(str, Enum):
+    PASSWORD = "password"
+    APPLE = "apple"
+    GOOGLE = "google"
+
+class Authentication(BaseModel):
+    type: AuthType
+    password_hash: str | None = None
+    email: str | None = None
+    # more optional members to follow
+
 class User(Document, UserBase):
     trust_score: int
-    ip_address: IPvAnyAddress | None
+    ip_address: IPvAnyAddress | None = None
     creation_date: datetime
-    authentication: Any
-
-    """
-        "authentication": {
-            "description": "User authentication information.",
-            "bsonType": "object",
-            "properties": {
-                "type": {
-                    "description": "Authentication type",
-                    "bsonType": "string",
-                    "pattern": "(apple|google|email)"
-                },
-                "email": {
-                    "description": "User's email address.",
-                    "bsonType": "string"
-                },
-                "passwordHash": {
-                    "description": "User password hash.",
-                    "bsonType": "string"
-                }
-            },
-    """
-    last_location: GeoJSONLocation | None
+    last_location: GeoJSONLocation | None = None
+    authentication: Authentication
 
     class Settings:
         name = "users"
