@@ -27,7 +27,7 @@ def update_user(data: dict):
     return {"message": "User data changed successfully!"}
 
 
-router.include_router(router)
+router.include_router(me_router)
 
 @router.post("/")
 async def create_user(user_info: UserIn):
