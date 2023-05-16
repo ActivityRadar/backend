@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from backend.database.models.users import User, UserAPI
+from backend.database.models.users import User
 from backend.database.service.users import UserService
 from backend.util.auth import create_access_token, decode_session_token, verify_password
 
@@ -35,12 +35,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     return user
 
 async def authenticate_user(username: str, plain: str):
+    auth_exception = HTTPException(400, "Incorrect details!")
     user = await get_user_by_name(username)
     if not user:
-        raise HTTPException(400, "Incorrect details!")
+        raise auth_exception
 
     if not verify_password(plain, user.authentication.password_hash):
-        raise HTTPException(400, "Incorrect details!")
+        raise auth_exception
 
     return user
 
@@ -50,7 +51,3 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     token = create_access_token(data={ "sub": str(user.id) })
 
     return { "access_token": token, "token_type": "bearer" }
-
-@router.get("/users/me")
-async def get_me(user: Annotated[User, Depends(get_current_user)]) -> UserAPI:
-    return UserAPI(**user.dict())
