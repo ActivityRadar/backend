@@ -41,3 +41,16 @@ class UserAPI(UserBase):
 class UserIn(UserBase):
     email: str
     password: str
+
+class UserPasswordReset(Document):
+    username: str
+    expiry: Datetime
+    token: str
+    ip_address: IPvAnyAddress | None
+
+    class Settings:
+        name = "password_reset_requests"
+        indexes = [
+            "username"
+        ]
+
