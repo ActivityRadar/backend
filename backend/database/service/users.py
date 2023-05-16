@@ -15,6 +15,7 @@ CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
 }
 
 INITIAL_TRUST_SCORE = 100
+USER_ARCHIVE_DAYS = 14
 
 class UserService:
     async def check_eligible_to_add(self, user_id) -> LocationTrustScore:
@@ -53,4 +54,30 @@ class UserService:
         ).insert()
 
         return u.id
+
+    async def archive(self, user: User) -> bool:
+        if user.archived_until is not None:
+            return False
+
+        user.archived_until = datetime.utcnow() + timedelta(days=USER_ARCHIVE_DAYS)
+        await user.save()
+
+        # TODO: do actions connected to archiving a user:
+        # - deactivate their offers and events
+        # - disable conversations with on user's contacts' clients
+
+        return True
+
+    async def unarchive(self, user: User):
+        if user.archived_until is None:
+            return False
+
+        user.archived_until = None
+        await user.save()
+
+        # TODO: do actions to reinstate the user normally
+        # - reactivate offers
+        # - enable all the user's conversations
+
+        return True
 

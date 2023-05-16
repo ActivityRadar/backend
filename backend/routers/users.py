@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.database.models.users import UserIn
 from backend.database.service.users import UserService
+from backend.routers.auth import authenticate_user, get_current_user, get_user_by_name, login
 
 router = APIRouter(
     prefix = "/users",
@@ -19,8 +20,15 @@ def get_this_user():
     return {"user_id": "This is you!"}
 
 @me_router.delete("/")
-def delete_user():
-    return {"message": "User was archived. Finally deleted in 14 days!"}
+async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    await authenticate_user(form_data.username, form_data.password)
+    success = await user_service.archive(user)
+    if success:
+        message = "User was archived! Will be deleted in 14 days!"
+    else:
+        message = "User could not be archived!"
+
+    return { "message": message }
 
 @me_router.put("/")
 def update_user(data: dict):
@@ -37,6 +45,20 @@ async def create_user(user_info: UserIn):
         raise HTTPException(400, "User with name exists!")
 
     return { "id": u_id }
+
+@router.put("/reactivate")
+async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    session_token_dict = await login(form_data)
+
+    user = await get_user_by_name(form_data.username)
+    if not user:
+        raise HTTPException(404, "User does not exist!")
+
+    success = await user_service.unarchive(user)
+    if not success:
+        raise HTTPException(400, "User is not archived!")
+
+    return session_token_dict
 
 @router.get("/{user_id}")
 def get_user_info(user_id: int):
