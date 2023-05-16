@@ -22,8 +22,8 @@ user_service = UserService()
 ApiUser = Annotated[User, Depends(get_current_user)]
 
 @me_router.get("/")
-def get_this_user():
-    return {"user_id": "This is you!"}
+def get_this_user(user: ApiUser) -> UserAPI:
+    return UserAPI(**user.dict())
 
 @me_router.delete("/")
 async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
