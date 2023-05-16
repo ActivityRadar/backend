@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
-from fastapi import HTTPException
+from fastapi import Form, HTTPException
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -13,6 +13,7 @@ load_dotenv()
 ALGORITHM = "HS256"
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or ""
 SESSION_TOKEN_EXPIRE = timedelta(minutes=2)
+PASSWORD_RESET_TOKEN_EXPIRE = timedelta(hours=2)
 
 class Token(BaseModel):
     access_type: str
@@ -20,6 +21,16 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: PydanticObjectId
+
+class RepeatPasswordForm(BaseModel):
+    new_password: str = Form()
+    new_password_repeated: str = Form()
+
+class ResetPasswordForm(RepeatPasswordForm):
+    ...
+
+class ChangePasswordForm(RepeatPasswordForm):
+    old_password: str = Form()
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -53,6 +64,14 @@ def create_access_token(data: dict, expiry_time: timedelta | None = None):
     return token
 
 def decode_session_token(token: str):
+    return decode_token(token)
+
+def create_password_reset_token(data: dict, expiry_time: timedelta | None = None):
+    expiry_time = expiry_time or PASSWORD_RESET_TOKEN_EXPIRE
+    token, expiry = create_token(data, expiry_time)
+    return token, expiry
+
+def decode_password_reset_token(token: str):
     return decode_token(token)
 
 def hash_password(plain: str):

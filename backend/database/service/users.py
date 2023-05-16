@@ -1,11 +1,25 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 from typing import Any
 
-from backend.database.models.users import AuthType, Authentication, User, UserIn
-from backend.util.auth import hash_password
 from beanie import PydanticObjectId
+
 from backend.database.models.shared import PhotoInfo
+from backend.database.models.users import (
+    AuthType,
+    Authentication,
+    User,
+    UserIn,
+    UserPasswordReset,
+)
+from backend.util.auth import (
+    ChangePasswordForm,
+    ResetPasswordForm,
+    create_password_reset_token,
+    decode_password_reset_token,
+    hash_password,
+    verify_password,
+)
 import backend.util.errors as E
 from backend.util.types import LocationTrustScore, UserTrustScore
 
@@ -82,6 +96,70 @@ class UserService:
         # - enable all the user's conversations
 
         return True
+
+    async def change_password(self, user: User, form: ChangePasswordForm):
+        if not verify_password(form.old_password, user.authentication.password_hash):
+            raise E.UserWrongPassword()
+
+        if form.old_password == form.new_password:
+            raise E.UserNewPasswordIsOldPassword()
+
+        await self.reset_password(user, ResetPasswordForm(**form.dict()))
+
+    async def reset_password(self, user: User, form: ResetPasswordForm):
+        if form.new_password != form.new_password_repeated:
+            raise E.UserNewPasswordDoesNotMatch()
+
+        await self._set_password(user, form.new_password)
+
+    async def _set_password(self, user: User, new_password: str):
+        user.authentication.password_hash = hash_password(new_password)
+        await user.save()
+
+    async def request_reset_password(self, username: str):
+        user = await self.get_by_username(username)
+        if not user:
+            # pretend that everything went alright
+            raise E.UserDoesNotExist()
+
+        token, expiry = create_password_reset_token({ "sub": str(user.id) })
+        print(token)
+
+        # if the user has an ongoing reset process, decline the request
+        u = await UserPasswordReset.find_one(UserPasswordReset.id == user.id)
+        if u:
+            raise E.UserHasPendingRequest()
+
+        # TODO: remember the IP address of the issuer to prevent spam requests and unnecessary emails to users
+        await UserPasswordReset(
+            username=username,
+            expiry=expiry,
+            token=token,
+            ip_address=None
+        ).save()
+
+        # TODO: send an email to the email address of the user with a hash that enables
+        # the user to use the reset_password option
+
+    async def execute_password_reset(self, token: str, passwords: ResetPasswordForm):
+        # check if the token is valid
+        token_info = decode_password_reset_token(token)
+
+        # check if the token belongs to the user's current reset process
+        u = await UserPasswordReset.find_one(UserPasswordReset.id == token_info.id)
+        if u is None or u.token != token:
+            raise E.TokenInvalid()
+
+        user = await self.get_by_username(u.username)
+        if not user:
+            # This should never be triggered though...
+            # Except, the user was deleted in the meantime...
+            raise E.UserDoesNotExist()
+
+        await self.reset_password(user, passwords)
+
+        # delete the reset request after successful reset
+        await u.delete()
 
     async def update_info(self, user: User, change_set: dict[str, Any]):
         async def _do(k, v):

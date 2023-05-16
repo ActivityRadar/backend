@@ -1,9 +1,11 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
-from backend.database.models.users import UserIn
+from backend.database.models.users import User, UserAPI, UserIn
 from backend.database.service.users import UserService
 from backend.routers.auth import authenticate_user, get_current_user, get_user_by_name, login
+from backend.util.auth import ChangePasswordForm, ResetPasswordForm
 import backend.util.errors as E
 
 router = APIRouter(
@@ -46,6 +48,16 @@ async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
         "new_user_info": new_info
     }
 
+@me_router.put("/change_password")
+async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswordForm, Depends()]):
+    print(form_data)
+    try:
+        await user_service.change_password(user, form_data)
+    except:
+        raise HTTPException(400, "Something went wrong!")
+
+    print("Pw changed!")
+
 
 router.include_router(me_router)
 
@@ -57,6 +69,30 @@ async def create_user(user_info: UserIn):
         raise HTTPException(400, "User with name exists!")
 
     return { "id": u_id }
+
+@router.get("/reset_password/{username}")
+async def request_reset_password(username: str):
+    try:
+        await user_service.request_reset_password(username)
+    except E.UserDoesNotExist:
+        raise HTTPException(404, "User does not exist!")
+    except E.UserHasPendingRequest:
+        raise HTTPException(400, "User has pending request!")
+
+    return { "message": f"A request has been sent to the user's email address!" }
+
+@router.put("/reset_password/{token}")
+async def reset_password(token: str, passwords: ResetPasswordForm):
+    try:
+        await user_service.execute_password_reset(token, passwords)
+    except E.TokenInvalid:
+        raise HTTPException(401, "Token outdated or invalid!")
+    except E.UserDoesNotExist:
+        raise HTTPException(404, "User does not exist!")
+    except E.UserNewPasswordDoesNotMatch:
+        raise HTTPException(401, "Passwords don't match!")
+
+    return { "message": "Password reset successfully!" }
 
 @router.put("/reactivate")
 async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
