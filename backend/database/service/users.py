@@ -4,6 +4,7 @@ import math
 from backend.database.models.users import AuthType, Authentication, User, UserIn
 from backend.util.auth import hash_password
 from backend.util.errors import UserDoesNotExist, UserLowTrust, UserWithNameExists
+from beanie import PydanticObjectId
 from backend.util.types import LocationTrustScore, UserTrustScore
 
 CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
@@ -24,6 +25,9 @@ class UserService:
             raise UserLowTrust()
 
         return CREATOR_TO_LOCATION_SCORES[math.floor(math.log10(u.trust_score))]
+
+    def get_by_id(self, id: PydanticObjectId):
+        return User.get(id)
 
     async def get_by_username(self, username: str) -> User | None:
         u = await User.find_one(User.username == username)
