@@ -1,10 +1,12 @@
 from datetime import datetime
 import math
+from typing import Any
 
 from backend.database.models.users import AuthType, Authentication, User, UserIn
 from backend.util.auth import hash_password
-from backend.util.errors import UserDoesNotExist, UserLowTrust, UserWithNameExists
 from beanie import PydanticObjectId
+from backend.database.models.shared import PhotoInfo
+import backend.util.errors as E
 from backend.util.types import LocationTrustScore, UserTrustScore
 
 CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
@@ -21,9 +23,9 @@ class UserService:
     async def check_eligible_to_add(self, user_id) -> LocationTrustScore:
         u = await User.get(user_id)
         if u is None:
-            raise UserDoesNotExist()
+            raise E.UserDoesNotExist()
         if u.trust_score < 100:
-            raise UserLowTrust()
+            raise E.UserLowTrust()
 
         return CREATOR_TO_LOCATION_SCORES[math.floor(math.log10(u.trust_score))]
 
@@ -37,7 +39,7 @@ class UserService:
     async def create_user(self, user_info: UserIn):
         u = await self.get_by_username(user_info.username)
         if u:
-            raise UserWithNameExists()
+            raise E.UserWithNameExists()
 
         auth = Authentication(
             type=AuthType.PASSWORD,
@@ -80,4 +82,38 @@ class UserService:
         # - enable all the user's conversations
 
         return True
+
+    async def update_info(self, user: User, change_set: dict[str, Any]):
+        async def _do(k, v):
+            match k:
+                case "username":
+                    # v must be a username which is not taken yet
+                    u = await self.get_by_username(v)
+                    if u:
+                        raise E.UsernameAlreadyTaken()
+
+                    # TODO: check if last change was not too soon
+                    # TODO: more checks for valid usernames
+                    user.username = v
+                case "display_name":
+                    # TODO: v must be a valid display name
+                    user.display_name = v
+                case "email":
+                    # TODO: v must be an email address as string
+                    user.authentication.email = v
+                    # TODO: the email is going to be confirmed
+                case "avatar":
+                    # v must be a dict convertible to a PhotoInfo object
+                    if v is None:
+                        avatar = None
+                    else:
+                        avatar = PhotoInfo(**v)
+
+                    user.avatar = avatar
+
+        for k, v in change_set.items():
+            await _do(k, v)
+
+        await user.save()
+        return user
 

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from backend.database.models.users import UserIn
 from backend.database.service.users import UserService
 from backend.routers.auth import authenticate_user, get_current_user, get_user_by_name, login
+import backend.util.errors as E
 
 router = APIRouter(
     prefix = "/users",
@@ -14,6 +16,8 @@ me_router = APIRouter(
 )
 
 user_service = UserService()
+
+ApiUser = Annotated[User, Depends(get_current_user)]
 
 @me_router.get("/")
 def get_this_user():
@@ -31,8 +35,16 @@ async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestF
     return { "message": message }
 
 @me_router.put("/")
-def update_user(data: dict):
-    return {"message": "User data changed successfully!"}
+async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
+    try:
+        new_info = await user_service.update_info(user, change_set)
+    except:
+        raise HTTPException(400, "Request encountered an error!")
+
+    return {
+        "message": "User data changed successfully!",
+        "new_user_info": new_info
+    }
 
 
 router.include_router(me_router)

@@ -7,3 +7,6 @@ class UserLowTrust(Exception):
 
 class UserWithNameExists(Exception):
     ...
+class UsernameAlreadyTaken(Exception):
+    ...
+
