@@ -25,3 +25,8 @@ class UsernameAlreadyTaken(Exception):
 
 class TokenInvalid(Exception):
     ...
+
+class InvalidUpdateOption(Exception):
+    def __init__(self, option: str) -> None:
+        super().__init__()
+        self.option = option

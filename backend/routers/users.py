@@ -40,6 +40,8 @@ async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestF
 async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
     try:
         new_info = await user_service.update_info(user, change_set)
+    except E.InvalidUpdateOption as e:
+        raise HTTPException(400, f"{e.option} is not a valid update option!")
     except:
         raise HTTPException(400, "Request encountered an error!")
 
@@ -58,6 +60,13 @@ async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswor
 
     print("Pw changed!")
 
+@me_router.post("/friend/{user_id}")
+async def add_as_friend(user: ApiUser, user_id: PydanticObjectId):
+    u = await user_service.get_by_id(user_id)
+    if not u:
+        raise HTTPException(404, "User does not exist!")
+
+    return {"message": "Friend request sent!", "username": u.username}
 
 router.include_router(me_router)
 

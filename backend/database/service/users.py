@@ -188,6 +188,8 @@ class UserService:
                         avatar = PhotoInfo(**v)
 
                     user.avatar = avatar
+                case _:
+                    raise E.InvalidUpdateOption(k)
 
         for k, v in change_set.items():
             await _do(k, v)
