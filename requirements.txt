@@ -3,7 +3,7 @@ uvicorn[standard]
 
 # for mongoDB
 pydantic-mongo
-beanie
+beanie>=1.19.0
 motor
 pymongo
 

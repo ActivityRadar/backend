@@ -28,12 +28,10 @@ class LocationService:
         return await LocationDetailedDB.get(id)
 
     async def get_bbox_short(self, bbox: BoundingBox, activities: list[str] | None) -> list[LocationShortDB]:
-        return await self.find_with_filters({ "location": { "$geoWithin": { "$box":  bbox }}}, activities=activities)
-        # TODO: When PR https://github.com/roman-right/beanie/pull/552 merged, use these lines instead
-        # return await self.find_with_filters(
-        #   Box(LocationShort.location, lower_left=bbox[0], upper_right=bbox[1]),
-        #   activities=activities
-        # )
+        return await self.find_with_filters(
+            Box(LocationShortDB.location, lower_left=list(bbox[0]), upper_right=list(bbox[1])),
+            activities=activities
+        )
 
     async def get_around(self, center: LongLat, radius: float, activities: list[str] | None) -> list[LocationShortDB]:
         if radius == 0.0:
