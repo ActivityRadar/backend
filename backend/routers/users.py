@@ -1,4 +1,5 @@
 from typing import Annotated
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -70,8 +71,10 @@ async def add_as_friend(user: ApiUser, user_id: PydanticObjectId):
 
 router.include_router(me_router)
 
+
 @router.post("/")
 async def create_user(user_info: UserIn):
+    # TODO: This should probably be protected with an API key.
     try:
         u_id = await user_service.create_user(user_info)
     except:
@@ -117,14 +120,15 @@ async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends
 
     return session_token_dict
 
-@router.get("/{user_id}")
-def get_user_info(user_id: int):
-    return {"user_id": user_id}
+@router.get("/{username}")
+async def get_user_info(searching_user: ApiUser, username: str):
+    u = await user_service.get_by_username(username)
+    if not u:
+        raise HTTPException(404, "User not found!")
+
+    return UserAPI(**u.dict())
 
 @router.post("/report/{user_id}")
-def report_user(user_id: int):
+def report_user(reporting_user: ApiUser, user_id: int):
     return {"message": "User reported successfully!", "user_id": user_id}
 
-@router.post("/friend/{user_id}")
-def add_as_friend(user_id: int):
-    return {"message": "Friend request sent!", "user_id": user_id}
