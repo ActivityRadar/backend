@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database.models.shared import Review
 from backend.database.service.users import UserService
+from backend.routers.users import ApiUser
 from backend.util.errors import UserDoesNotExist, UserLowTrust
 
 from ..database.models.locations import (
@@ -56,18 +57,16 @@ async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
     return LocationDetailedAPI(**result.dict())
 
 @router.post("/")
-async def create_new_location(info: LocationNew):
-    user_id = PydanticObjectId("644eba29790782455ca48222")
-
+async def create_new_location(adding_user: ApiUser, info: LocationNew):
     try:
-        trust_score = await user_service.check_eligible_to_add(user_id)
+        trust_score = await user_service.check_eligible_to_add(adding_user.id)
     except UserDoesNotExist:
         raise HTTPException(400, "User does not exist!")
     except UserLowTrust:
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(**info.dict(), recent_reviews=[], trust_score=trust_score)
-    new_id = await location_service.insert(detailed, user_id)
+    new_id = await location_service.insert(detailed, adding_user.id)
     return { "id": new_id }
 
 @router.put("/{location_id}")
