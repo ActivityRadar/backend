@@ -3,14 +3,17 @@ import math
 from typing import Any
 
 from beanie import PydanticObjectId
+from beanie.operators import All, ElemMatch
 
 from backend.database.models.shared import PhotoInfo
 from backend.database.models.users import (
     AuthType,
     Authentication,
+    RelationStatus,
     User,
     UserIn,
     UserPasswordReset,
+    UserRelation,
 )
 from backend.util.auth import (
     ChangePasswordForm,
@@ -197,3 +200,62 @@ class UserService:
         await user.save()
         return user
 
+class RelationService:
+    async def add_friend(self, from_user: User, to_user: User):
+        ids: list[PydanticObjectId] = [from_user.id, to_user.id] # type: ignore
+
+        f = await UserRelation.find_one(All(UserRelation.users, ids))
+        if f is not None:
+            raise E.RelationExists(f.id)
+
+        f = await UserRelation(
+            users=ids,
+            creation_date=datetime.utcnow(),
+            status=RelationStatus.PENDING
+        ).insert()
+
+        # TODO: Send a request
+
+        return f.id
+
+    async def get_relation(self, relation_id: PydanticObjectId):
+        f = await UserRelation.get(relation_id)
+        if not f:
+            raise E.RelationDoesNotExist()
+
+        return f
+
+    async def get_open_request(self, relation_id: PydanticObjectId):
+        f = await self.get_relation(relation_id)
+        if f.status != RelationStatus.PENDING:
+            raise E.NotAnOpenRequest(f.id)
+
+        return f
+
+    def check_user_in_relation(self, user: User, relation: UserRelation):
+        if not user.id in relation.users:
+            raise E.UserIsNotPartOfRelation(user.id, relation.id)
+
+    async def accept_friend_request(self, user: User, relation_id: PydanticObjectId):
+        f = await self.get_open_request(relation_id)
+        self.check_user_in_relation(user, f)
+        f.status = RelationStatus.ACCEPTED
+        await f.save()
+
+        # TODO: Inform requesting user
+
+    async def decline_friend_request(self, user: User, relation_id: PydanticObjectId):
+        f = await self.get_open_request(relation_id)
+        self.check_user_in_relation(user, f)
+        f.status = RelationStatus.DECLINED
+        await f.save()
+
+        # TODO: Inform requesting user
+
+    async def get_all_relations(self, user: User):
+        fs = await UserRelation.find(ElemMatch(UserRelation.users, user.id)) # type: ignore
+        return fs
+
+    async def get_all_active_relations(self, user: User):
+        fs = await self.get_all_relations(user)
+        return await fs.find(UserRelation.status == RelationStatus.ACCEPTED)

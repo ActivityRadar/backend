@@ -1,6 +1,6 @@
 from enum import Enum
 
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, IPvAnyAddress
 from pymongo import GEOSPHERE, IndexModel
 
@@ -55,3 +55,12 @@ class UserPasswordReset(Document):
             "username"
         ]
 
+class RelationStatus(Enum):
+    ACCEPTED = "accepted"
+    PENDING = "pending"
+    DECLINED = "declined"
+
+class UserRelation(Document):
+    users: list[PydanticObjectId]
+    creation_date: Datetime
+    status: RelationStatus
