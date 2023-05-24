@@ -11,7 +11,8 @@ import backend.util.errors as E
 
 router = APIRouter(
     prefix = "/users",
-    tags = ["users"]
+    tags = ["users"],
+    dependencies=[Depends(get_current_user)] # only logged in users can access user data
 )
 
 me_router = APIRouter(
