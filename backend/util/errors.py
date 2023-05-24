@@ -49,3 +49,9 @@ class UserIsNotPartOfRelation(Exception):
         super().__init__()
         self.user_id = user_id
         self.relation_id = relation_id
+
+class UserCantReactToOwnRequest(Exception):
+    ...
+
+class UserCantSendAnotherRequestCurrently(Exception):
+    ...

@@ -211,19 +211,45 @@ class RelationService:
     async def add_friend(self, from_user: User, to_user: User):
         ids: list[PydanticObjectId] = [from_user.id, to_user.id] # type: ignore
 
+        def send_request():
+            # TODO: Send a request
+            pass
+
         f = await UserRelation.find_one(All(UserRelation.users, ids))
-        if f is not None:
-            raise E.RelationExists(f.id)
+        if f is None:
+            f = await UserRelation(
+                users=ids,
+                creation_date=datetime.utcnow(),
+                status=RelationStatus.PENDING
+            ).insert()
 
-        f = await UserRelation(
-            users=ids,
-            creation_date=datetime.utcnow(),
-            status=RelationStatus.PENDING
-        ).insert()
+            send_request()
 
-        # TODO: Send a request
+            return f.id
 
-        return f.id
+        match(f.status):
+            case RelationStatus.ACCEPTED:
+                raise E.RelationExists(f.id)
+            case RelationStatus.DECLINED:
+                # user has declined the request before, but now wants to accept.
+                # In this case, we send another request to the initial requester
+                if f.users[1] == from_user.id:
+                    f.users.reverse()
+                    await f.save()
+                    send_request()
+                    return f.id
+                else:
+                    raise E.UserCantSendAnotherRequestCurrently()
+            case RelationStatus.PENDING:
+                # both users probably requested simultaneously
+                if f.users[1] == from_user.id:
+                    await self.accept_friend_request(from_user, f.id) # type: ignore
+                # user sent request twice
+                else:
+                    raise E.UserHasPendingRequest()
+            case _:
+                raise NotImplementedError()
+
 
     async def get_relation(self, relation_id: PydanticObjectId):
         f = await UserRelation.get(relation_id)
@@ -243,9 +269,14 @@ class RelationService:
         if not user.id in relation.users:
             raise E.UserIsNotPartOfRelation(user.id, relation.id)
 
+    def check_user_is_not_requesting(self, user: User, relation: UserRelation):
+        if user.id == relation.users[0]:
+            raise E.UserCantReactToOwnRequest(user.id, relation.id)
+
     async def accept_friend_request(self, user: User, relation_id: PydanticObjectId):
         f = await self.get_open_request(relation_id)
         self.check_user_in_relation(user, f)
+        self.check_user_is_not_requesting(user, f)
         f.status = RelationStatus.ACCEPTED
         await f.save()
 
@@ -254,15 +285,60 @@ class RelationService:
     async def decline_friend_request(self, user: User, relation_id: PydanticObjectId):
         f = await self.get_open_request(relation_id)
         self.check_user_in_relation(user, f)
+        self.check_user_is_not_requesting(user, f)
         f.status = RelationStatus.DECLINED
         await f.save()
 
         # TODO: Inform requesting user
 
-    async def get_all_relations(self, user: User):
-        fs = await UserRelation.find(ElemMatch(UserRelation.users, user.id)) # type: ignore
-        return fs
+    def get_all_relations(self, user: User) -> FindMany:
+        # TODO: follow this discussion: https://github.com/roman-right/beanie/discussions/570
+        return UserRelation.find(ElemMatch(UserRelation.users, {"$eq": user.id})) # type: ignore
 
-    async def get_all_active_relations(self, user: User):
-        fs = await self.get_all_relations(user)
-        return await fs.find(UserRelation.status == RelationStatus.ACCEPTED)
+    def get_all_active_relations(self, user: User) -> FindMany:
+        fs = self.get_all_relations(user)
+        return fs.find(UserRelation.status == RelationStatus.ACCEPTED)
+
+    def get_active_and_open_relations(self, user: User) -> FindMany:
+        fs = self.get_all_relations(user)
+        filter = In(UserRelation.status, [RelationStatus.ACCEPTED, RelationStatus.PENDING])
+        return fs.find(filter)
+
+    def get_open_relations(self, user: User) -> FindMany:
+        fs = self.get_all_relations(user)
+        return fs.find(UserRelation.status == RelationStatus.PENDING)
+
+    async def get_received_requests(self, user: User) -> list[UserRelation]:
+        fs = self.get_open_relations(user)
+        pending = []
+        async for f in fs:
+            if f.users[1] != user.id:
+                continue
+
+            pending.append(f)
+
+        return pending
+
+    async def relations_to_users(self, user: User, relations: FindMany[UserRelation] | list[UserRelation]):
+        users = []
+        async def _get(r):
+            if user.id not in r.users:
+                raise ValueError()
+            id = r.users[1] if user.id == r.users[0] else r.users[0]
+
+            u = await user_service.get_by_id(id)
+            return u
+
+        if isinstance(relations, FindMany):
+            async for r in relations:
+                users.append(await _get(r))
+        else: # list[UserRelations]
+            for r in relations:
+                users.append(await _get(r))
+
+        return users
+
+
+# global instances that can be imported by other modules
+user_service = UserService()
+relation_service = RelationService()
