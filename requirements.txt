@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+
+# for mongoDB
+pydantic-mongo
+beanie
+motor
+pymongo
+
+# for authentication
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
