@@ -59,15 +59,63 @@ async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswor
 
     print("Pw changed!")
 
-@me_router.post("/friend/{user_id}")
-async def add_as_friend(user: ApiUser, user_id: PydanticObjectId):
+router.include_router(me_router)
+
+relation_router = APIRouter(
+    prefix = "/friend",
+)
+
+
+@relation_router.post("/{user_id}")
+async def add_as_friend(requester: ApiUser, user_id: PydanticObjectId):
     u = await user_service.get_by_id(user_id)
     if not u:
         raise HTTPException(404, "User does not exist!")
 
-    return {"message": "Friend request sent!", "username": u.username}
+    try:
+        f_id = await relation_service.add_friend(requester, u)
+    except Exception as e:
+        print(type(e))
+        raise HTTPException(400, "Something went wrong!")
 
-router.include_router(me_router)
+    return {
+        "message": "Friend request sent!",
+        "username": u.username,
+        "relation_id": f_id
+    }
+
+@relation_router.post("/accept/{relation_id}")
+async def accept_friend_request(user: ApiUser, relation_id: PydanticObjectId):
+    try:
+        await relation_service.accept_friend_request(user, relation_id)
+    except Exception as e:
+        print(type(e))
+        raise HTTPException(400, "Bad request!")
+
+    return { "message": "Success!" }
+
+@relation_router.post("/decline/{relation_id}")
+async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
+    try:
+        await relation_service.decline_friend_request(user, relation_id)
+    except Exception as e:
+        print(type(e))
+        raise HTTPException(400, "Bad request!")
+
+    return { "message": "Success!" }
+
+@relation_router.get("/")
+async def get_all_friends(user: ApiUser) -> list[UserAPI]:
+    rs = relation_service.get_all_active_relations(user)
+    users = await relation_service.relations_to_users(user, rs)
+    return [UserAPI(**u.dict()) for u in users]
+
+@relation_router.get("/open")
+async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
+    rs = await relation_service.get_received_requests(user)
+    return rs
+
+router.include_router(relation_router)
 
 
 @router.post("/")
