@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from backend.database.models.users import User
-from backend.database.service.users import UserService
+from backend.database.service import user_service
 from backend.util.auth import create_access_token, decode_session_token, verify_password
 
 router = APIRouter(
@@ -14,7 +14,6 @@ router = APIRouter(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-user_service = UserService()
 
 async def get_user(id: PydanticObjectId) -> User | None:
     return await user_service.get_by_id(id)

@@ -3,28 +3,23 @@ from typing import Annotated
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.database.models.shared import Review
-from backend.database.service.users import UserService
-from backend.routers.users import ApiUser
-from backend.util.errors import UserDoesNotExist, UserLowTrust
-
-from ..database.models.locations import (
+from backend.database.models.locations import (
     LocationDetailed,
     LocationDetailedAPI,
     LocationNew,
     LocationShortAPI,
     LocationShortDB,
 )
-from ..database.service.locations import LocationService
-from ..util.types import LatitudeCoordinate, LongitudeCoordinate
+from backend.database.models.shared import Review
+from backend.database.service import location_service, user_service
+from backend.routers.users import ApiUser
+from backend.util.errors import UserDoesNotExist, UserLowTrust
+from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
 router = APIRouter(
     prefix = "/locations",
     tags = ["locations"]
 )
-
-location_service = LocationService()
-user_service = UserService()
 
 @router.get("/bbox")
 async def get_locations_by_bbox(
