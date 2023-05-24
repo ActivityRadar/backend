@@ -118,13 +118,10 @@ async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends
 
     return session_token_dict
 
-@router.get("/{username}")
-async def get_user_info(searching_user: ApiUser, username: str):
-    u = await user_service.get_by_username(username)
-    if not u:
-        raise HTTPException(404, "User not found!")
-
-    return UserAPI(**u.dict())
+@router.get("/")
+async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserAPI]:
+    users = await user_service.find_by_name(search)
+    return [UserAPI(**u.dict()) for u in users]
 
 @router.post("/report/{user_id}")
 def report_user(reporting_user: ApiUser, user_id: int):

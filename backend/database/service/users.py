@@ -3,7 +3,8 @@ import math
 from typing import Any
 
 from beanie import PydanticObjectId
-from beanie.operators import All, ElemMatch
+from beanie.odm.queries.find import FindMany
+from beanie.operators import All, ElemMatch, In, RegEx
 
 from backend.database.models.shared import PhotoInfo
 from backend.database.models.users import (
@@ -52,6 +53,12 @@ class UserService:
     async def get_by_username(self, username: str) -> User | None:
         u = await User.find_one(User.username == username)
         return u
+
+    async def find_by_name(self, name):
+        # TODO: Check if this can be exploited! (like some injection, idk)
+        regex = "^" + name # only search from start of username
+        users = await User.find_many(RegEx(User.username, regex, options="i")).to_list()
+        return users
 
     async def create_user(self, user_info: UserIn):
         u = await self.get_by_username(user_info.username)
