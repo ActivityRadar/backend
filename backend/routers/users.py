@@ -63,7 +63,7 @@ async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswor
 router.include_router(me_router)
 
 relation_router = APIRouter(
-    prefix = "/friend",
+    prefix = "/friends",
 )
 
 
