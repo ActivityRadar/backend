@@ -37,7 +37,7 @@ class User(Document, UserBase):
         ]
 
 class UserAPI(UserBase):
-    ...
+    id: PydanticObjectId
 
 class UserIn(UserBase):
     email: str
