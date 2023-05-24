@@ -55,7 +55,7 @@ class UserPasswordReset(Document):
             "username"
         ]
 
-class RelationStatus(Enum):
+class RelationStatus(str, Enum):
     ACCEPTED = "accepted"
     PENDING = "pending"
     DECLINED = "declined"
@@ -64,3 +64,6 @@ class UserRelation(Document):
     users: list[PydanticObjectId]
     creation_date: Datetime
     status: RelationStatus
+
+    class Settings:
+        name = "user_relations"

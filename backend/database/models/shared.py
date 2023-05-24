@@ -28,6 +28,9 @@ class Review(Document):
     overall_rating: float
     details: dict[str, Any]
 
+    class Settings:
+        name = "reviews"
+
 class GeoJSONLocation(BaseModel):
     type: str = "Point"
     coordinates: list[float]
