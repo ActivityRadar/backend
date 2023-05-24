@@ -12,7 +12,7 @@ load_dotenv()
 
 ALGORITHM = "HS256"
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or ""
-SESSION_TOKEN_EXPIRE = timedelta(minutes=2)
+SESSION_TOKEN_EXPIRE = timedelta(minutes=20)
 PASSWORD_RESET_TOKEN_EXPIRE = timedelta(hours=2)
 
 class Token(BaseModel):
