@@ -11,7 +11,7 @@ from backend.database.models.locations import (
     LocationShortDB,
 )
 from backend.database.models.shared import Review
-from backend.database.service import location_service, user_service
+from backend.database.service import location_service, user_service, review_service
 from backend.routers.users import ApiUser
 from backend.util.errors import UserDoesNotExist, UserLowTrust
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
@@ -97,14 +97,15 @@ def get_reviews(location_id: int, start: int, n: int) -> list[Review]:
     return []
 
 @review_router.post("/")
-def create_review(location_id: int, data: dict):
+async def create_review(user: ApiUser, location_id: PydanticObjectId, review: Review):
     # error if location not found
+    loc = await location_service.get(location_id)
+    if not loc:
+        raise HTTPException(404, "Location not found!")
 
-    # error if user has review for location already
+    review_id = await review_service.create(user, location_id, review)
 
-    # error if data is incomplete or incorrect
-
-    pass
+    return review_id
 
 @review_router.put("/")
 def update_review(location_id: int, review_id: int, data: dict):
