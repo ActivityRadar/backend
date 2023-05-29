@@ -55,3 +55,6 @@ class UserCantReactToOwnRequest(Exception):
 
 class UserCantSendAnotherRequestCurrently(Exception):
     ...
+
+class UserHasReviewAlready(Exception):
+    ...

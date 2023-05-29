@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
@@ -22,9 +21,10 @@ class PhotoInfo(BaseModel):
     creation_date: Datetime
 
 class Review(Document):
-    user_id: UUID
-    text: str
+    location_id: PydanticObjectId
+    user_id: PydanticObjectId
     creation_date: Datetime
+    text: str # TODO limit in length
     overall_rating: float
     details: dict[str, Any]
 
