@@ -10,8 +10,18 @@ from backend.database.models.shared import (
     GeoJSONLocation,
     GeoJSONObject,
     PhotoInfo,
-    Review,
 )
+from backend.util.types import Datetime
+
+class ReviewInfo(BaseModel):
+    location_id: PydanticObjectId
+    text: str # TODO limit in length
+    overall_rating: float
+    details: dict[str, Any]
+
+class ReviewBase(ReviewInfo):
+    creation_date: Datetime
+    user_id: PydanticObjectId
 
 class LocationBase(BaseModel):
     activity_type: str
@@ -20,10 +30,11 @@ class LocationBase(BaseModel):
 class LocationShort(LocationBase):
     name: str | None
     trust_score: int
+    average_rating: float | None
 
 class LocationDetailed(LocationShort):
     tags: dict[str, Any]
-    recent_reviews: list[Review]
+    recent_reviews: list[ReviewBase]
     geometry: GeoJSONObject | None
     photos: list[PhotoInfo] | None
 
@@ -65,3 +76,25 @@ class LocationDetailedAPI(LocationDetailed):
 class LocationHistory(Document):
     pass
 
+class Review(ReviewBase, Document):
+    class Settings:
+        name = "reviews"
+
+class ReviewIn(ReviewInfo):
+    ...
+
+class ReviewOut(Review):
+    id: PydanticObjectId
+
+class ReviewsPage(BaseModel):
+    next_offset: int | None
+    reviews: list[ReviewOut]
+
+class ReviewReport(Document):
+    review_id: PydanticObjectId
+    user_id: PydanticObjectId
+    reason: str
+    report_date: Datetime
+
+    class Settings:
+        name = "review_reports"

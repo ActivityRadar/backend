@@ -20,17 +20,6 @@ class PhotoInfo(BaseModel):
     url: str
     creation_date: Datetime
 
-class Review(Document):
-    location_id: PydanticObjectId
-    user_id: PydanticObjectId
-    creation_date: Datetime
-    text: str # TODO limit in length
-    overall_rating: float
-    details: dict[str, Any]
-
-    class Settings:
-        name = "reviews"
-
 class GeoJSONLocation(BaseModel):
     type: str = "Point"
     coordinates: list[float]

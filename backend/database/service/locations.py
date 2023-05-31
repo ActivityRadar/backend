@@ -54,3 +54,13 @@ class LocationService:
     def check_possible_duplicate(self, location: LocationDetailed) -> None | list[LocationDetailed]:
         return None
 
+    async def set_average_rating(self, location_id: PydanticObjectId, average: float | None):
+        loc = await self.get(location_id)
+        if not loc:
+            raise errors.LocationDoesNotExist()
+
+        loc.average_rating = average
+        await loc.save()
+
+        return loc.average_rating
+

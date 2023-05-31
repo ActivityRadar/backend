@@ -9,11 +9,13 @@ from backend.database.models.locations import (
     LocationNew,
     LocationShortAPI,
     LocationShortDB,
+    ReviewInfo,
+    ReviewOut,
+    ReviewsPage,
 )
-from backend.database.models.shared import Review
 from backend.database.service import location_service, user_service, review_service
 from backend.routers.users import ApiUser
-from backend.util.errors import UserDoesNotExist, UserLowTrust
+import backend.util.errors as errors
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
 router = APIRouter(
@@ -55,9 +57,9 @@ async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
 async def create_new_location(adding_user: ApiUser, info: LocationNew):
     try:
         trust_score = await user_service.check_eligible_to_add(adding_user.id)
-    except UserDoesNotExist:
+    except errors.UserDoesNotExist:
         raise HTTPException(400, "User does not exist!")
-    except UserLowTrust:
+    except errors.UserLowTrust:
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(**info.dict(), recent_reviews=[], trust_score=trust_score)
@@ -90,58 +92,66 @@ review_router = APIRouter(
 )
 
 @review_router.get("/")
-def get_reviews(location_id: int, start: int, n: int) -> list[Review]:
+async def get_reviews(location_id: PydanticObjectId, offset: int = 0, n: int = 10) -> ReviewsPage:
     """
-    Get `n` reviews starting from the `start`th entry.
+        Get `n` reviews starting from the `offset`th entry.
     """
-    return []
+
+    reviews, new_offset = await review_service.get_page(location_id, offset, n)
+
+    reviews = [ReviewOut(**r.dict()) for r in reviews]
+
+    return ReviewsPage(reviews=reviews, next_offset=new_offset)
 
 @review_router.post("/")
-async def create_review(user: ApiUser, location_id: PydanticObjectId, review: Review):
+async def create_review(user: ApiUser, review: ReviewInfo):
     # error if location not found
-    loc = await location_service.get(location_id)
+    loc = await location_service.get(review.location_id)
     if not loc:
         raise HTTPException(404, "Location not found!")
 
-    review_id = await review_service.create(user, location_id, review)
+    try:
+        review_id = await review_service.create(user, review)
+    except errors.UserHasReviewAlready:
+        raise HTTPException(400, "User already has a review for that location!")
 
     return review_id
 
 @review_router.put("/")
-def update_review(location_id: int, review_id: int, data: dict):
-    # error if location not found
+async def update_review(user: ApiUser, review_id: PydanticObjectId, review: ReviewInfo):
+    try:
+        await review_service.update(user, review_id, review)
+    except errors.ReviewDoesNotExist:
+        raise HTTPException(404, "Review with given id not found!")
+    except errors.UserDoesNotOwnReview:
+        raise HTTPException(401, "Not authorized to update this review!")
 
-    # error if review doesnt exist
-
-    # error if review isnt owned by user
-
-    # error if data is inclomplete or incorrect
-
-    # error if location and review dont match
-    pass
-
-@review_router.put("/confirmation")
-def set_confirmation(location_id: int, data: dict):
-    # error if location not found
-
-    # error if user has same confirmation for location already
-
-    # error if data is inclomplete or incorrect
-
-    pass
+    return { "message": "success" }
 
 @review_router.delete("/")
-def remove_review(location_id: int):
-    # error if location not found
+async def remove_review(user: ApiUser, review_id: PydanticObjectId):
+    try:
+        await review_service.delete(user, review_id)
+    except errors.ReviewDoesNotExist:
+        raise HTTPException(404, "Review with given id not found!")
+    except errors.UserDoesNotOwnReview:
+        raise HTTPException(401, "Not authorized to delete this review!")
 
-    pass
+    return { "message": "success" }
 
 @review_router.put("/{review_id}")
-def report_review(location_id: int, review_id: int, reason: str):
-    # error if location not found
+async def report_review(user: ApiUser, review_id: PydanticObjectId, reason: str):
+    try:
+        await review_service.report(user, review_id, reason)
+    except errors.UserHasAlreadyReportedThisReview:
+        raise HTTPException(401, "User has already reported this review!")
 
-    # error if review does not exist
+    return { "message": "success" }
 
-    pass
+@review_router.put("/confirmation")
+async def set_confirmation(user: ApiUser, location_id: PydanticObjectId, confirm: bool = True):
+    # TODO: functionality has to be implemented
+    # await review_service.confirm_location(user, location_id, confirm)
+    raise NotImplementedError()
 
 router.include_router(review_router)
