@@ -3,9 +3,15 @@ from typing import Any
 
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
-from pymongo import IndexModel, GEOSPHERE
+from pymongo import GEOSPHERE, IndexModel
 
-from .shared import CreationInfo, GeoJSONLocation, GeoJSONObject, PhotoInfo, Review
+from backend.database.models.shared import (
+    CreationInfo,
+    GeoJSONLocation,
+    GeoJSONObject,
+    PhotoInfo,
+    Review,
+)
 
 class LocationBase(BaseModel):
     activity_type: str

@@ -1,11 +1,11 @@
-from datetime import datetime
 from enum import Enum
 
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, IPvAnyAddress
 from pymongo import GEOSPHERE, IndexModel
 
-from .shared import UserBase, GeoJSONLocation
+from backend.database.models.shared import UserBase, GeoJSONLocation
+from backend.util.types import Datetime
 
 
 class AuthType(str, Enum):
@@ -22,9 +22,10 @@ class Authentication(BaseModel):
 class User(Document, UserBase):
     trust_score: int
     ip_address: IPvAnyAddress | None = None
-    creation_date: datetime
+    creation_date: Datetime
     last_location: GeoJSONLocation | None = None
     authentication: Authentication
+    archived_until: Datetime | None = None
 
     class Settings:
         name = "users"
@@ -36,8 +37,33 @@ class User(Document, UserBase):
         ]
 
 class UserAPI(UserBase):
-    ...
+    id: PydanticObjectId
 
 class UserIn(UserBase):
     email: str
     password: str
+
+class UserPasswordReset(Document):
+    username: str
+    expiry: Datetime
+    token: str
+    ip_address: IPvAnyAddress | None
+
+    class Settings:
+        name = "password_reset_requests"
+        indexes = [
+            "username"
+        ]
+
+class RelationStatus(str, Enum):
+    ACCEPTED = "accepted"
+    PENDING = "pending"
+    DECLINED = "declined"
+
+class UserRelation(Document):
+    users: list[PydanticObjectId]
+    creation_date: Datetime
+    status: RelationStatus
+
+    class Settings:
+        name = "user_relations"
