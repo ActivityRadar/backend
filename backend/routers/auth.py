@@ -1,12 +1,16 @@
 from typing import Annotated
-from beanie import PydanticObjectId
 
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from backend.database.models.users import User
 from backend.database.service import user_service
-from backend.util.auth import create_access_token, decode_session_token, verify_password
+from backend.util.crypto import (
+    create_access_token,
+    decode_session_token,
+    verify_password,
+)
 
 router = APIRouter(
     prefix="/auth",

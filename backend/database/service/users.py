@@ -17,7 +17,7 @@ from backend.database.models.users import (
     UserPasswordReset,
     UserRelation,
 )
-from backend.util.auth import (
+from backend.util.crypto import (
     ChangePasswordForm,
     ResetPasswordForm,
     create_password_reset_token,

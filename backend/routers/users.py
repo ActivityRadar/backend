@@ -1,12 +1,18 @@
 from typing import Annotated
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 from backend.database.models.users import User, UserAPI, UserIn, UserRelation
 from backend.database.service import relation_service, user_service
-from backend.routers.auth import authenticate_user, get_current_user, get_user_by_name, login
-from backend.util.auth import ChangePasswordForm, ResetPasswordForm
+from backend.routers.auth import (
+    authenticate_user,
+    get_current_user,
+    get_user_by_name,
+    login,
+)
+from backend.util.crypto import ChangePasswordForm, ResetPasswordForm
 import backend.util.errors as E
 
 router = APIRouter(
