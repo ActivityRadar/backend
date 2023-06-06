@@ -67,7 +67,7 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
     new_id = await location_service.insert(detailed, adding_user.id)
     return { "id": new_id }
 
-@router.put("/{location_id}")
+@router.put("/")
 async def update_location(user: ApiUser, location_info: LocationHistoryIn):
     try:
         await location_service.update(user, location_info)
@@ -76,6 +76,10 @@ async def update_location(user: ApiUser, location_info: LocationHistoryIn):
         raise HTTPException(400, f"Some error occured! {type(e)}, {e}")
 
     return { "message": "success" }
+
+@router.post("/report-update")
+async def report_location_update(user: ApiUser, update_id: PydanticObjectId, reason: str):
+    raise NotImplementedError()
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int):
