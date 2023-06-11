@@ -19,13 +19,16 @@ class Authentication(BaseModel):
     email: str | None = None
     # more optional members to follow
 
-class User(Document, UserBase):
+class UserWithoutId(UserBase):
     trust_score: int
     ip_address: IPvAnyAddress | None = None
     creation_date: Datetime
     last_location: GeoJSONLocation | None = None
     authentication: Authentication
     archived_until: Datetime | None = None
+
+class User(Document, UserWithoutId):
+    id: PydanticObjectId
 
     class Settings:
         name = "users"
@@ -35,6 +38,12 @@ class User(Document, UserBase):
             IndexModel([("last_location", GEOSPHERE)],
                        name="last_location_index_GEO")
         ]
+
+class NewUser(Document, UserWithoutId):
+    id: PydanticObjectId | None = None
+
+    class Settings:
+        name = "users"
 
 class UserAPI(UserBase):
     id: PydanticObjectId
