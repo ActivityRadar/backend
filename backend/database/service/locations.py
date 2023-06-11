@@ -145,6 +145,10 @@ class LocationService:
     async def add_photo(self, user: User, location_id: PydanticObjectId, photo: PhotoInfo):
         raise NotImplementedError()
 
+    async def get_history(self, location_id: PydanticObjectId, offset: int):
+        search = LocationHistory.find(LocationHistory.location_id == location_id)
+        return await search.sort(-LocationHistory.date).skip(offset).limit(10).to_list()
+
     async def report_update(self, user: User, update_id: PydanticObjectId, reason: str):
         c = await LocationUpdateReport.find(LocationUpdateReport.user_id == user.id).count()
         if c > MAX_ONGOING_UPDATE_REPORTS:

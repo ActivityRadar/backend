@@ -77,7 +77,12 @@ async def update_location(user: ApiUser, location_info: LocationHistoryIn):
 
     return { "message": "success" }
 
-@router.post("/report-update")
+@router.get("/{location_id}/update-history")
+async def get_location_history(location_id: PydanticObjectId, offset: int = 0):
+    history = await location_service.get_history(location_id, offset)
+    return history
+
+@router.post("/report-update/{update_id}")
 async def report_location_update(user: ApiUser, update_id: PydanticObjectId, reason: str):
     try:
         report_id = await location_service.report_update(user, update_id, reason)
