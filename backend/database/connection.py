@@ -3,9 +3,8 @@ import os
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from backend.database.models.locations import LocationDetailedDB, LocationHistory, LocationShortDB
+from backend.database.models.locations import LocationDetailedDB, LocationHistory, LocationShortDB, Review
 from backend.database.models.offers import Offer
-from backend.database.models.shared import Review
 from backend.database.models.users import User, UserPasswordReset, UserRelation
 
 client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STIRNG"))

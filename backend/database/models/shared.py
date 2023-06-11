@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
@@ -20,16 +19,6 @@ class PhotoInfo(BaseModel):
     user_id: PydanticObjectId
     url: str
     creation_date: Datetime
-
-class Review(Document):
-    user_id: UUID
-    text: str
-    creation_date: Datetime
-    overall_rating: float
-    details: dict[str, Any]
-
-    class Settings:
-        name = "reviews"
 
 class GeoJSONLocation(BaseModel):
     type: str = "Point"
