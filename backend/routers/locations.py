@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from backend.database.models.locations import (
     LocationDetailed,
     LocationDetailedAPI,
+    LocationHistoryIn,
     LocationNew,
     LocationShortAPI,
     LocationShortDB,
@@ -67,14 +68,14 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
     return { "id": new_id }
 
 @router.put("/{location_id}")
-def update_location(location_id: int):
-    # error if location not found
+async def update_location(user: ApiUser, location_info: LocationHistoryIn):
+    try:
+        await location_service.update(user, location_info)
+    except Exception as e:
+        print(e)
+        raise HTTPException(400, f"Some error occured! {type(e)}, {e}")
 
-    # error if user has no rights to update location
-
-    # error if data is incomplete
-
-    pass
+    return { "message": "success" }
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int):
