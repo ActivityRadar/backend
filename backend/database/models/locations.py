@@ -120,3 +120,12 @@ class ReviewReport(Document):
 
     class Settings:
         name = "review_reports"
+
+class LocationUpdateReport(Document):
+    user_id: PydanticObjectId
+    update_id: PydanticObjectId
+    reason: str
+    date: Datetime
+
+    class Settings:
+        name = "location_update_reports"

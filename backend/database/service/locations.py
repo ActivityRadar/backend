@@ -3,11 +3,21 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.operators import Box, In, NearSphere
 
-from backend.database.models.locations import LocationDetailed, LocationDetailedDB, LocationHistory, LocationHistoryIn, LocationShortDB, TagChangeType
+from backend.database.models.locations import (
+    LocationDetailed,
+    LocationDetailedDB,
+    LocationHistory,
+    LocationHistoryIn,
+    LocationShortDB,
+    LocationUpdateReport,
+    TagChangeType,
+)
 from backend.database.models.shared import CreationInfo, LocationCreators, PhotoInfo
 from backend.database.models.users import User
 from backend.util import errors
 from backend.util.types import BoundingBox, LongLat
+
+MAX_ONGOING_UPDATE_REPORTS = 10
 
 class LocationService:
     def __init__(self) -> None:
@@ -135,3 +145,20 @@ class LocationService:
     async def add_photo(self, user: User, location_id: PydanticObjectId, photo: PhotoInfo):
         raise NotImplementedError()
 
+    async def report_update(self, user: User, update_id: PydanticObjectId, reason: str):
+        c = await LocationUpdateReport.find(LocationUpdateReport.user_id == user.id).count()
+        if c > MAX_ONGOING_UPDATE_REPORTS:
+            raise errors.UserHasTooManyOngoingUpdateReports()
+
+        # TODO: Sanitize reason
+
+        # TODO: notify moderator
+
+        r = await LocationUpdateReport(
+            user_id=user.id,
+            date=datetime.utcnow(),
+            reason=reason,
+            update_id=update_id
+        ).insert()
+
+        return r.id

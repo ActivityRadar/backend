@@ -79,7 +79,11 @@ async def update_location(user: ApiUser, location_info: LocationHistoryIn):
 
 @router.post("/report-update")
 async def report_location_update(user: ApiUser, update_id: PydanticObjectId, reason: str):
-    raise NotImplementedError()
+    try:
+        report_id = await location_service.report_update(user, update_id, reason)
+    except:
+        raise HTTPException(500, "Something went wrong!")
+    return { "message": "success", "report_id": report_id }
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int):

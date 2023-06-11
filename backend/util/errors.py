@@ -88,3 +88,6 @@ class TagExists(Exception):
 
 class TagDoesNotExist(Exception):
     ...
+
+class UserHasTooManyOngoingUpdateReports(Exception):
+    ...
