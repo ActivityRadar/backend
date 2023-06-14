@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from backend.database.models.locations import (
     LocationDetailed,
     LocationDetailedAPI,
+    LocationHistoryIn,
     LocationNew,
     LocationShortAPI,
     LocationShortDB,
@@ -66,15 +67,28 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
     new_id = await location_service.insert(detailed, adding_user.id)
     return { "id": new_id }
 
-@router.put("/{location_id}")
-def update_location(location_id: int):
-    # error if location not found
+@router.put("/")
+async def update_location(user: ApiUser, location_info: LocationHistoryIn):
+    try:
+        await location_service.update(user, location_info)
+    except Exception as e:
+        print(e)
+        raise HTTPException(400, f"Some error occured! {type(e)}, {e}")
 
-    # error if user has no rights to update location
+    return { "message": "success" }
 
-    # error if data is incomplete
+@router.get("/{location_id}/update-history")
+async def get_location_history(location_id: PydanticObjectId, offset: int = 0):
+    history = await location_service.get_history(location_id, offset)
+    return history
 
-    pass
+@router.post("/report-update/{update_id}")
+async def report_location_update(user: ApiUser, update_id: PydanticObjectId, reason: str):
+    try:
+        report_id = await location_service.report_update(user, update_id, reason)
+    except:
+        raise HTTPException(500, "Something went wrong!")
+    return { "message": "success", "report_id": report_id }
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int):

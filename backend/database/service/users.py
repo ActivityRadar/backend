@@ -10,13 +10,14 @@ from backend.database.models.shared import PhotoInfo
 from backend.database.models.users import (
     AuthType,
     Authentication,
+    NewUser,
     RelationStatus,
     User,
     UserIn,
     UserPasswordReset,
     UserRelation,
 )
-from backend.util.auth import (
+from backend.util.crypto import (
     ChangePasswordForm,
     ResetPasswordForm,
     create_password_reset_token,
@@ -72,7 +73,7 @@ class UserService:
         )
 
         creation_time = datetime.utcnow()
-        u = await User(
+        u = await NewUser(
             **user_info.dict(),
             creation_date=creation_time,
             authentication=auth,
@@ -209,7 +210,7 @@ class UserService:
 
 class RelationService:
     async def add_friend(self, from_user: User, to_user: User):
-        ids: list[PydanticObjectId] = [from_user.id, to_user.id] # type: ignore
+        ids: list[PydanticObjectId] = [from_user.id, to_user.id]
 
         def send_request():
             # TODO: Send a request
@@ -293,7 +294,7 @@ class RelationService:
 
     def get_all_relations(self, user: User) -> FindMany:
         # TODO: follow this discussion: https://github.com/roman-right/beanie/discussions/570
-        return UserRelation.find(ElemMatch(UserRelation.users, {"$eq": user.id})) # type: ignore
+        return UserRelation.find(ElemMatch(UserRelation.users, {"$eq": user.id}))
 
     def get_all_active_relations(self, user: User) -> FindMany:
         fs = self.get_all_relations(user)

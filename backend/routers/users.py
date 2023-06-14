@@ -1,22 +1,35 @@
 from typing import Annotated
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 from backend.database.models.users import User, UserAPI, UserIn, UserRelation
 from backend.database.service import relation_service, user_service
-from backend.routers.auth import authenticate_user, get_current_user, get_user_by_name, login
-from backend.util.auth import ChangePasswordForm, ResetPasswordForm
+from backend.routers.auth import (
+    authenticate_user,
+    get_current_user,
+    get_user_by_name,
+    login,
+)
+from backend.util.crypto import ChangePasswordForm, ResetPasswordForm
 import backend.util.errors as E
 
 router = APIRouter(
     prefix = "/users",
     tags = ["users"],
-    dependencies=[Depends(get_current_user)] # only logged in users can access user data
 )
 
 me_router = APIRouter(
-    prefix = "/me"
+    prefix = "/me",
+    tags = ["me"],
+    dependencies=[Depends(get_current_user)] # only logged in users can access user data
+)
+
+relation_router = APIRouter(
+    prefix = "/friends",
+    tags = ["friends"],
+    dependencies=[Depends(get_current_user)] # only logged in users can access user data
 )
 
 ApiUser = Annotated[User, Depends(get_current_user)]
@@ -59,13 +72,6 @@ async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswor
         raise HTTPException(400, "Something went wrong!")
 
     print("Pw changed!")
-
-router.include_router(me_router)
-
-relation_router = APIRouter(
-    prefix = "/friends",
-)
-
 
 @relation_router.post("/{user_id}")
 async def add_as_friend(requester: ApiUser, user_id: PydanticObjectId):
@@ -116,15 +122,12 @@ async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
     rs = await relation_service.get_received_requests(user)
     return rs
 
-router.include_router(relation_router)
-
-
 @router.post("/")
 async def create_user(user_info: UserIn):
     # TODO: This should probably be protected with an API key.
     try:
         u_id = await user_service.create_user(user_info)
-    except:
+    except E.UserWithNameExists:
         raise HTTPException(400, "User with name exists!")
 
     return { "id": u_id }
@@ -176,3 +179,5 @@ async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserAPI]:
 def report_user(reporting_user: ApiUser, user_id: int):
     return {"message": "User reported successfully!", "user_id": user_id}
 
+router.include_router(relation_router)
+router.include_router(me_router)

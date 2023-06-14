@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from beanie import Document, PydanticObjectId
@@ -73,8 +74,29 @@ class LocationShortAPI(LocationBase):
 class LocationDetailedAPI(LocationDetailed):
     ...
 
-class LocationHistory(Document):
-    pass
+class TagChangeType(str, Enum):
+    ADD = "add"
+    DELETE = "delete"
+    CHANGE = "change"
+
+TagContent = str
+
+class TagChange(BaseModel):
+    mode: TagChangeType
+    content: TagContent | tuple[TagContent, TagContent] # Any for Add and delete, tuple for changes
+
+class LocationHistoryIn(BaseModel):
+    location_id: PydanticObjectId
+    before: dict[str, Any] | None
+    after: dict[str, Any] | None
+    tags: dict[str, TagChange] | None
+
+class LocationHistory(LocationHistoryIn, Document):
+    user_id: PydanticObjectId
+    date: Datetime
+
+    class Settings:
+        name = "location_change_history"
 
 class Review(ReviewBase, Document):
     class Settings:
@@ -98,3 +120,12 @@ class ReviewReport(Document):
 
     class Settings:
         name = "review_reports"
+
+class LocationUpdateReport(Document):
+    user_id: PydanticObjectId
+    update_id: PydanticObjectId
+    reason: str
+    date: Datetime
+
+    class Settings:
+        name = "location_update_reports"
