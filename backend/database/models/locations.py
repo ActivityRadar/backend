@@ -14,30 +14,36 @@ from backend.database.models.shared import (
 )
 from backend.util.types import Datetime
 
+
 class ReviewInfo(BaseModel):
     location_id: PydanticObjectId
-    text: str # TODO limit in length
+    text: str  # TODO limit in length
     overall_rating: float
     details: dict[str, Any]
+
 
 class ReviewBase(ReviewInfo):
     creation_date: Datetime
     user_id: PydanticObjectId
 
+
 class LocationBase(BaseModel):
     activity_type: str
     location: GeoJSONLocation
+
 
 class LocationShort(LocationBase):
     name: str | None
     trust_score: int
     average_rating: float | None
 
+
 class LocationDetailed(LocationShort):
     tags: dict[str, Any]
     recent_reviews: list[ReviewBase]
     geometry: GeoJSONObject | None
     photos: list[PhotoInfo] | None
+
 
 class LocationDetailedDB(Document, LocationDetailed):
     creation: CreationInfo
@@ -49,18 +55,18 @@ class LocationDetailedDB(Document, LocationDetailed):
         indexes = [
             "osm_id",
             "activity_type",
-            IndexModel([("location", GEOSPHERE)],
-                       name="location_index_GEO")
+            IndexModel([("location", GEOSPHERE)], name="location_index_GEO"),
         ]
+
 
 class LocationShortDB(Document, LocationShort):
     class Settings:
         name = "simple_locations"
         indexes = [
             "activity_type",
-            IndexModel([("location", GEOSPHERE)],
-                       name="location_index_GEO")
+            IndexModel([("location", GEOSPHERE)], name="location_index_GEO"),
         ]
+
 
 class LocationNew(LocationBase):
     name: str | None = None
@@ -68,28 +74,37 @@ class LocationNew(LocationBase):
     tags: dict[str, Any] = {}
     geometry: GeoJSONObject | None = None
 
+
 class LocationShortAPI(LocationBase):
     id: PydanticObjectId
 
+
 class LocationDetailedAPI(LocationDetailed):
     ...
+
 
 class TagChangeType(str, Enum):
     ADD = "add"
     DELETE = "delete"
     CHANGE = "change"
 
+
 TagContent = str
+
 
 class TagChange(BaseModel):
     mode: TagChangeType
-    content: TagContent | tuple[TagContent, TagContent] # Any for Add and delete, tuple for changes
+    content: TagContent | tuple[
+        TagContent, TagContent
+    ]  # Any for Add and delete, tuple for changes
+
 
 class LocationHistoryIn(BaseModel):
     location_id: PydanticObjectId
     before: dict[str, Any] | None
     after: dict[str, Any] | None
     tags: dict[str, TagChange] | None
+
 
 class LocationHistory(LocationHistoryIn, Document):
     user_id: PydanticObjectId
@@ -98,19 +113,24 @@ class LocationHistory(LocationHistoryIn, Document):
     class Settings:
         name = "location_change_history"
 
+
 class Review(ReviewBase, Document):
     class Settings:
         name = "reviews"
 
+
 class ReviewIn(ReviewInfo):
     ...
+
 
 class ReviewOut(Review):
     id: PydanticObjectId
 
+
 class ReviewsPage(BaseModel):
     next_offset: int | None
     reviews: list[ReviewOut]
+
 
 class ReviewReport(Document):
     review_id: PydanticObjectId
@@ -120,6 +140,7 @@ class ReviewReport(Document):
 
     class Settings:
         name = "review_reports"
+
 
 class LocationUpdateReport(Document):
     user_id: PydanticObjectId

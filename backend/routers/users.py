@@ -4,6 +4,7 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
+import backend.util.errors as E
 from backend.database.models.users import User, UserAPI, UserIn, UserRelation
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
@@ -13,33 +14,40 @@ from backend.routers.auth import (
     login,
 )
 from backend.util.crypto import ChangePasswordForm, ResetPasswordForm
-import backend.util.errors as E
 
 router = APIRouter(
-    prefix = "/users",
-    tags = ["users"],
+    prefix="/users",
+    tags=["users"],
 )
 
 me_router = APIRouter(
-    prefix = "/me",
-    tags = ["me"],
-    dependencies=[Depends(get_current_user)] # only logged in users can access user data
+    prefix="/me",
+    tags=["me"],
+    dependencies=[
+        Depends(get_current_user)
+    ],  # only logged in users can access user data
 )
 
 relation_router = APIRouter(
-    prefix = "/friends",
-    tags = ["friends"],
-    dependencies=[Depends(get_current_user)] # only logged in users can access user data
+    prefix="/friends",
+    tags=["friends"],
+    dependencies=[
+        Depends(get_current_user)
+    ],  # only logged in users can access user data
 )
 
 ApiUser = Annotated[User, Depends(get_current_user)]
+
 
 @me_router.get("/")
 def get_this_user(user: ApiUser) -> UserAPI:
     return UserAPI(**user.dict())
 
+
 @me_router.delete("/")
-async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def delete_user(
+    user: ApiUser, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
     await authenticate_user(form_data.username, form_data.password)
     success = await user_service.archive(user)
     if success:
@@ -47,7 +55,8 @@ async def delete_user(user: ApiUser, form_data: Annotated[OAuth2PasswordRequestF
     else:
         message = "User could not be archived!"
 
-    return { "message": message }
+    return {"message": message}
+
 
 @me_router.put("/")
 async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
@@ -58,13 +67,13 @@ async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
     except:
         raise HTTPException(400, "Request encountered an error!")
 
-    return {
-        "message": "User data changed successfully!",
-        "new_user_info": new_info
-    }
+    return {"message": "User data changed successfully!", "new_user_info": new_info}
+
 
 @me_router.put("/change_password")
-async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswordForm, Depends()]):
+async def change_user_password(
+    user: ApiUser, form_data: Annotated[ChangePasswordForm, Depends()]
+):
     print(form_data)
     try:
         await user_service.change_password(user, form_data)
@@ -72,6 +81,7 @@ async def change_user_password(user: ApiUser, form_data: Annotated[ChangePasswor
         raise HTTPException(400, "Something went wrong!")
 
     print("Pw changed!")
+
 
 @relation_router.post("/{user_id}")
 async def add_as_friend(requester: ApiUser, user_id: PydanticObjectId):
@@ -88,8 +98,9 @@ async def add_as_friend(requester: ApiUser, user_id: PydanticObjectId):
     return {
         "message": "Friend request sent!",
         "username": u.username,
-        "relation_id": f_id
+        "relation_id": f_id,
     }
+
 
 @relation_router.post("/accept/{relation_id}")
 async def accept_friend_request(user: ApiUser, relation_id: PydanticObjectId):
@@ -99,7 +110,8 @@ async def accept_friend_request(user: ApiUser, relation_id: PydanticObjectId):
         print(type(e))
         raise HTTPException(400, "Bad request!")
 
-    return { "message": "Success!" }
+    return {"message": "Success!"}
+
 
 @relation_router.post("/decline/{relation_id}")
 async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
@@ -109,7 +121,8 @@ async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
         print(type(e))
         raise HTTPException(400, "Bad request!")
 
-    return { "message": "Success!" }
+    return {"message": "Success!"}
+
 
 @relation_router.get("/")
 async def get_all_friends(user: ApiUser) -> list[UserAPI]:
@@ -117,10 +130,12 @@ async def get_all_friends(user: ApiUser) -> list[UserAPI]:
     users = await relation_service.relations_to_users(user, rs)
     return [UserAPI(**u.dict()) for u in users]
 
+
 @relation_router.get("/open")
 async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
     rs = await relation_service.get_received_requests(user)
     return rs
+
 
 @router.post("/")
 async def create_user(user_info: UserIn):
@@ -130,7 +145,8 @@ async def create_user(user_info: UserIn):
     except E.UserWithNameExists:
         raise HTTPException(400, "User with name exists!")
 
-    return { "id": u_id }
+    return {"id": u_id}
+
 
 @router.get("/reset_password/{username}")
 async def request_reset_password(username: str):
@@ -141,7 +157,8 @@ async def request_reset_password(username: str):
     except E.UserHasPendingRequest:
         raise HTTPException(400, "User has pending request!")
 
-    return { "message": f"A request has been sent to the user's email address!" }
+    return {"message": f"A request has been sent to the user's email address!"}
+
 
 @router.put("/reset_password/{token}")
 async def reset_password(token: str, passwords: ResetPasswordForm):
@@ -154,7 +171,8 @@ async def reset_password(token: str, passwords: ResetPasswordForm):
     except E.UserNewPasswordDoesNotMatch:
         raise HTTPException(401, "Passwords don't match!")
 
-    return { "message": "Password reset successfully!" }
+    return {"message": "Password reset successfully!"}
+
 
 @router.put("/reactivate")
 async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
@@ -170,14 +188,17 @@ async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends
 
     return session_token_dict
 
+
 @router.get("/")
 async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserAPI]:
     users = await user_service.find_by_name(search)
     return [UserAPI(**u.dict()) for u in users]
 
+
 @router.post("/report/{user_id}")
 def report_user(reporting_user: ApiUser, user_id: int):
     return {"message": "User reported successfully!", "user_id": user_id}
+
 
 router.include_router(relation_router)
 router.include_router(me_router)

@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from beanie import PydanticObjectId
 
 from backend.database.models.locations import Review, ReviewInfo, ReviewReport
@@ -11,7 +12,12 @@ class ReviewService:
         return await Review.get(id)
 
     async def get_page(self, location_id: PydanticObjectId, offset: int, size: int):
-        rs = await Review.find(Review.location_id == location_id).skip(offset).limit(size).to_list()
+        rs = (
+            await Review.find(Review.location_id == location_id)
+            .skip(offset)
+            .limit(size)
+            .to_list()
+        )
         if len(rs) < size:
             return rs, None
         return rs, offset + size
@@ -34,9 +40,7 @@ class ReviewService:
         self.validate(review_info)
 
         review = await Review(
-            user_id=user.id,
-            creation_date=datetime.utcnow(),
-            **review_info.dict()
+            user_id=user.id, creation_date=datetime.utcnow(), **review_info.dict()
         ).insert()
 
         # TODO: at some point, we need to update the average score of the location
@@ -47,7 +51,9 @@ class ReviewService:
         return review.id
 
     async def get_average_rating(self, location_id: PydanticObjectId):
-        return await Review.find(Review.location_id == location_id).avg(Review.overall_rating)
+        return await Review.find(Review.location_id == location_id).avg(
+            Review.overall_rating
+        )
 
     async def update(self, user: User, review_id: PydanticObjectId, review: ReviewInfo):
         r = await Review.get(review_id)
@@ -67,7 +73,9 @@ class ReviewService:
         r.creation_date = datetime.utcnow()
         await r.save()
 
-    async def confirm_location(self, user: User, location_id: PydanticObjectId, confirm: bool):
+    async def confirm_location(
+        self, user: User, location_id: PydanticObjectId, confirm: bool
+    ):
         # error if location not found
         # error if user has same confirmation for location already
         raise NotImplementedError()
@@ -94,10 +102,9 @@ class ReviewService:
             user_id=user.id,
             review_id=review_id,
             report_date=datetime.utcnow(),
-            reason=reason
+            reason=reason,
         ).insert()
 
         # TODO: notify admin of report to check on it
 
         return r.id
-

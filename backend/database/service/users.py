@@ -1,15 +1,16 @@
-from datetime import datetime, timedelta
 import math
+from datetime import datetime, timedelta
 from typing import Any
 
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
 from beanie.operators import All, ElemMatch, In, RegEx
 
+import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo
 from backend.database.models.users import (
-    AuthType,
     Authentication,
+    AuthType,
     NewUser,
     RelationStatus,
     User,
@@ -25,7 +26,6 @@ from backend.util.crypto import (
     hash_password,
     verify_password,
 )
-import backend.util.errors as E
 from backend.util.types import LocationTrustScore, UserTrustScore
 
 CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
@@ -37,6 +37,7 @@ CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
 
 INITIAL_TRUST_SCORE = 100
 USER_ARCHIVE_DAYS = 14
+
 
 class UserService:
     async def check_eligible_to_add(self, user_id) -> LocationTrustScore:
@@ -57,7 +58,7 @@ class UserService:
 
     async def find_by_name(self, name):
         # TODO: Check if this can be exploited! (like some injection, idk)
-        regex = "^" + name # only search from start of username
+        regex = "^" + name  # only search from start of username
         users = await User.find_many(RegEx(User.username, regex, options="i")).to_list()
         return users
 
@@ -69,7 +70,7 @@ class UserService:
         auth = Authentication(
             type=AuthType.PASSWORD,
             password_hash=hash_password(user_info.password),
-            email=user_info.email
+            email=user_info.email,
         )
 
         creation_time = datetime.utcnow()
@@ -77,7 +78,7 @@ class UserService:
             **user_info.dict(),
             creation_date=creation_time,
             authentication=auth,
-            trust_score=INITIAL_TRUST_SCORE
+            trust_score=INITIAL_TRUST_SCORE,
         ).insert()
 
         return u.id
@@ -133,7 +134,7 @@ class UserService:
             # pretend that everything went alright
             raise E.UserDoesNotExist()
 
-        token, expiry = create_password_reset_token({ "sub": str(user.id) })
+        token, expiry = create_password_reset_token({"sub": str(user.id)})
         print(token)
 
         # if the user has an ongoing reset process, decline the request
@@ -143,10 +144,7 @@ class UserService:
 
         # TODO: remember the IP address of the issuer to prevent spam requests and unnecessary emails to users
         await UserPasswordReset(
-            username=username,
-            expiry=expiry,
-            token=token,
-            ip_address=None
+            username=username, expiry=expiry, token=token, ip_address=None
         ).save()
 
         # TODO: send an email to the email address of the user with a hash that enables
@@ -208,6 +206,7 @@ class UserService:
         await user.save()
         return user
 
+
 class RelationService:
     async def add_friend(self, from_user: User, to_user: User):
         ids: list[PydanticObjectId] = [from_user.id, to_user.id]
@@ -221,14 +220,14 @@ class RelationService:
             f = await UserRelation(
                 users=ids,
                 creation_date=datetime.utcnow(),
-                status=RelationStatus.PENDING
+                status=RelationStatus.PENDING,
             ).insert()
 
             send_request()
 
             return f.id
 
-        match(f.status):
+        match (f.status):
             case RelationStatus.ACCEPTED:
                 raise E.RelationExists(f.id)
             case RelationStatus.DECLINED:
@@ -244,13 +243,12 @@ class RelationService:
             case RelationStatus.PENDING:
                 # both users probably requested simultaneously
                 if f.users[1] == from_user.id:
-                    await self.accept_friend_request(from_user, f.id) # type: ignore
+                    await self.accept_friend_request(from_user, f.id)  # type: ignore
                 # user sent request twice
                 else:
                     raise E.UserHasPendingRequest()
             case _:
                 raise NotImplementedError()
-
 
     async def get_relation(self, relation_id: PydanticObjectId):
         f = await UserRelation.get(relation_id)
@@ -302,7 +300,9 @@ class RelationService:
 
     def get_active_and_open_relations(self, user: User) -> FindMany:
         fs = self.get_all_relations(user)
-        filter = In(UserRelation.status, [RelationStatus.ACCEPTED, RelationStatus.PENDING])
+        filter = In(
+            UserRelation.status, [RelationStatus.ACCEPTED, RelationStatus.PENDING]
+        )
         return fs.find(filter)
 
     def get_open_relations(self, user: User) -> FindMany:
@@ -320,8 +320,11 @@ class RelationService:
 
         return pending
 
-    async def relations_to_users(self, user: User, relations: FindMany[UserRelation] | list[UserRelation]):
+    async def relations_to_users(
+        self, user: User, relations: FindMany[UserRelation] | list[UserRelation]
+    ):
         users = []
+
         async def _get(r):
             if user.id not in r.users:
                 raise ValueError()
@@ -333,7 +336,7 @@ class RelationService:
         if isinstance(relations, FindMany):
             async for r in relations:
                 users.append(await _get(r))
-        else: # list[UserRelations]
+        else:  # list[UserRelations]
             for r in relations:
                 users.append(await _get(r))
 
