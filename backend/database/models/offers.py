@@ -3,15 +3,17 @@ from uuid import UUID
 
 from beanie import Document
 from pydantic import BaseModel
-from pymongo import DESCENDING, IndexModel, GEOSPHERE
+from pymongo import DESCENDING, GEOSPHERE, IndexModel
 
 from ...util.types import Datetime, TimeSlotFixed, TimeSlotFlexible
-from .shared import UserBase, GeoJSONLocation
+from .shared import GeoJSONLocation, UserBase
+
 
 class OfferType(str, Enum):
     SINGLE = "single"
     RECURRING = "recurring"
     FLEXIBLE = "flexible"
+
 
 class OfferVisibility(str, Enum):
     FRIENDS = "friends"
@@ -19,25 +21,30 @@ class OfferVisibility(str, Enum):
     FOLLOWERS = "followers"
     DRAFT = "draft"
 
+
 class OfferStatus(str, Enum):
     OPEN = "open"
     DELETED = "deleted"
     CLOSED = "closed"
     ARCHIVED = "archived"
 
+
 class OfferLocation(BaseModel):
     center: GeoJSONLocation
     location_id: UUID | None
     radius: float | None
 
+
 class Recurrence(BaseModel):
-    weekdays: int # encoded as binary number, 255 combinations of weekdays
+    weekdays: int  # encoded as binary number, 255 combinations of weekdays
     from_to: TimeSlotFlexible
+
 
 class OfferTime(BaseModel):
     type: OfferType
     times: list[TimeSlotFlexible | TimeSlotFixed] | None
     recurrence: Recurrence | None
+
 
 class Offer(Document):
     user_info: UserBase

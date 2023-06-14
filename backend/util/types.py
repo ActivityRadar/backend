@@ -11,6 +11,7 @@ LongLat = tuple[LongitudeCoordinate, LatitudeCoordinate]
 BoundingBox = tuple[LongLat, LongLat]
 Polygon = list[LongLat]
 
+
 def to_4_corners(b: BoundingBox) -> list[list[float]]:
     lleft, lright, uleft, uright = [b[0], [b[0][1], b[1][0]], [b[1][0], b[0][1]], b[1]]
     return [lleft, lright, uleft, uright]

@@ -46,6 +46,3 @@ python load_sample_data.py
 ```
 
 This will populate your DB with some values from Berlin.
-
-
-

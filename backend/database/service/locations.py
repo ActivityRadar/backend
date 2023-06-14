@@ -19,6 +19,7 @@ from backend.util.types import BoundingBox, LongLat
 
 MAX_ONGOING_UPDATE_REPORTS = 10
 
+
 class LocationService:
     def __init__(self) -> None:
         # take care, the ODM classes might not have been initialized by beanie yet...
@@ -28,30 +29,46 @@ class LocationService:
     def get_activities_filter(self, activities):
         return In(LocationShortDB.activity_type, activities)
 
-    async def insert(self, location: LocationDetailed, user_id: PydanticObjectId) -> PydanticObjectId:
+    async def insert(
+        self, location: LocationDetailed, user_id: PydanticObjectId
+    ) -> PydanticObjectId:
         self.check_possible_duplicate(location)
 
-        creation = CreationInfo(created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id)
-        loc = await LocationDetailedDB(**location.dict(), last_modified=creation.date, creation=creation).insert()
+        creation = CreationInfo(
+            created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id
+        )
+        loc = await LocationDetailedDB(
+            **location.dict(), last_modified=creation.date, creation=creation
+        ).insert()
         await LocationShortDB(**loc.dict()).insert()
         return loc.id
 
     async def get(self, id: PydanticObjectId) -> LocationDetailedDB | None:
         return await LocationDetailedDB.get(id)
 
-    async def get_bbox_short(self, bbox: BoundingBox, activities: list[str] | None) -> list[LocationShortDB]:
+    async def get_bbox_short(
+        self, bbox: BoundingBox, activities: list[str] | None
+    ) -> list[LocationShortDB]:
         return await self.find_with_filters(
-            Box(LocationShortDB.location, lower_left=list(bbox[0]), upper_right=list(bbox[1])),
-            activities=activities
+            Box(
+                LocationShortDB.location,
+                lower_left=list(bbox[0]),
+                upper_right=list(bbox[1]),
+            ),
+            activities=activities,
         )
 
-    async def get_around(self, center: LongLat, radius: float, activities: list[str] | None) -> list[LocationShortDB]:
+    async def get_around(
+        self, center: LongLat, radius: float, activities: list[str] | None
+    ) -> list[LocationShortDB]:
         if radius == 0.0:
             return []
 
         return await self.find_with_filters(
-            NearSphere(LocationShortDB.location, center[0], center[1], max_distance=radius),
-            activities=activities
+            NearSphere(
+                LocationShortDB.location, center[0], center[1], max_distance=radius
+            ),
+            activities=activities,
         )
 
     async def find_with_filters(self, *filters, activities: list[str] | None):
@@ -61,10 +78,14 @@ class LocationService:
 
         return await LocationShortDB.find_many(*filters).to_list()
 
-    def check_possible_duplicate(self, location: LocationDetailed) -> None | list[LocationDetailed]:
+    def check_possible_duplicate(
+        self, location: LocationDetailed
+    ) -> None | list[LocationDetailed]:
         return None
 
-    async def set_average_rating(self, location_id: PydanticObjectId, average: float | None):
+    async def set_average_rating(
+        self, location_id: PydanticObjectId, average: float | None
+    ):
         loc = await self.get(location_id)
         if not loc:
             raise errors.LocationDoesNotExist()
@@ -142,7 +163,9 @@ class LocationService:
 
                         tags[t] = change.content[1]
 
-    async def add_photo(self, user: User, location_id: PydanticObjectId, photo: PhotoInfo):
+    async def add_photo(
+        self, user: User, location_id: PydanticObjectId, photo: PhotoInfo
+    ):
         raise NotImplementedError()
 
     async def get_history(self, location_id: PydanticObjectId, offset: int):
@@ -150,7 +173,9 @@ class LocationService:
         return await search.sort(-LocationHistory.date).skip(offset).limit(10).to_list()
 
     async def report_update(self, user: User, update_id: PydanticObjectId, reason: str):
-        c = await LocationUpdateReport.find(LocationUpdateReport.user_id == user.id).count()
+        c = await LocationUpdateReport.find(
+            LocationUpdateReport.user_id == user.id
+        ).count()
         if c > MAX_ONGOING_UPDATE_REPORTS:
             raise errors.UserHasTooManyOngoingUpdateReports()
 
@@ -159,10 +184,7 @@ class LocationService:
         # TODO: notify moderator
 
         r = await LocationUpdateReport(
-            user_id=user.id,
-            date=datetime.utcnow(),
-            reason=reason,
-            update_id=update_id
+            user_id=user.id, date=datetime.utcnow(), reason=reason, update_id=update_id
         ).insert()
 
         return r.id

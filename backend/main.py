@@ -2,11 +2,12 @@ import dotenv
 from fastapi import FastAPI
 
 from .database.connection import init as init_db
-from .routers import auth, users, offers, locations
+from .routers import auth, locations, offers, users
 
 dotenv.load_dotenv()
 
 app = FastAPI()
+
 
 @app.on_event("startup")
 async def startup():

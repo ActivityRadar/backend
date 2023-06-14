@@ -12,18 +12,18 @@ from backend.util.crypto import (
     verify_password,
 )
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"]
-)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
 
 async def get_user(id: PydanticObjectId) -> User | None:
     return await user_service.get_by_id(id)
 
+
 async def get_user_by_name(username: str) -> User | None:
     return await user_service.get_by_username(username)
+
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
@@ -37,6 +37,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
     return user
 
+
 async def authenticate_user(username: str, plain: str):
     auth_exception = HTTPException(400, "Incorrect details!")
     user = await get_user_by_name(username)
@@ -48,9 +49,10 @@ async def authenticate_user(username: str, plain: str):
 
     return user
 
+
 @router.post("/token")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = await authenticate_user(form_data.username, form_data.password)
-    token = create_access_token(data={ "sub": str(user.id) })
+    token = create_access_token(data={"sub": str(user.id)})
 
-    return { "access_token": token, "token_type": "bearer" }
+    return {"access_token": token, "token_type": "bearer"}

@@ -8,17 +8,25 @@ from backend.database.models.locations import (
     LocationHistory,
     LocationShortDB,
     LocationUpdateReport,
-    Review
+    Review,
 )
 from backend.database.models.offers import Offer
 from backend.database.models.users import NewUser, User, UserPasswordReset, UserRelation
 
 client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STIRNG"))
 
+
 async def init():
-    documents = [UserPasswordReset, UserRelation,
-                 LocationDetailedDB, LocationShortDB,
-                 Review, LocationHistory, Offer, LocationUpdateReport]
+    documents = [
+        UserPasswordReset,
+        UserRelation,
+        LocationDetailedDB,
+        LocationShortDB,
+        Review,
+        LocationHistory,
+        Offer,
+        LocationUpdateReport,
+    ]
 
     for d in documents:
         await init_beanie(database=client.AR, document_models=[d])

@@ -3,6 +3,7 @@ from typing import Annotated
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Query
 
+import backend.util.errors as errors
 from backend.database.models.locations import (
     LocationDetailed,
     LocationDetailedAPI,
@@ -14,38 +15,41 @@ from backend.database.models.locations import (
     ReviewOut,
     ReviewsPage,
 )
-from backend.database.service import location_service, user_service, review_service
+from backend.database.service import location_service, review_service, user_service
 from backend.routers.users import ApiUser
-import backend.util.errors as errors
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
-router = APIRouter(
-    prefix = "/locations",
-    tags = ["locations"]
-)
+router = APIRouter(prefix="/locations", tags=["locations"])
+
 
 @router.get("/bbox")
 async def get_locations_by_bbox(
-        west: LongitudeCoordinate,
-        south: LatitudeCoordinate,
-        east: LongitudeCoordinate,
-        north: LatitudeCoordinate,
-        activities: list[str] | None = Query(None)) -> list[LocationShortAPI]:
+    west: LongitudeCoordinate,
+    south: LatitudeCoordinate,
+    east: LongitudeCoordinate,
+    north: LatitudeCoordinate,
+    activities: list[str] | None = Query(None),
+) -> list[LocationShortAPI]:
     bbox = ((west, south), (east, north))
-    short: list[LocationShortDB] = await location_service.get_bbox_short(bbox, activities)
+    short: list[LocationShortDB] = await location_service.get_bbox_short(
+        bbox, activities
+    )
     result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
     return result
 
+
 @router.get("/around")
 async def get_locations_around(
-        long: LongitudeCoordinate,
-        lat: LatitudeCoordinate,
-        radius: Annotated[float, "Distance in km"],
-        activities: list[str] | None = Query(None)) -> list[LocationShortAPI]:
+    long: LongitudeCoordinate,
+    lat: LatitudeCoordinate,
+    radius: Annotated[float, "Distance in km"],
+    activities: list[str] | None = Query(None),
+) -> list[LocationShortAPI]:
     center = (long, lat)
     short = await location_service.get_around(center, radius, activities)
     result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
     return result
+
 
 @router.get("/{location_id}")
 async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
@@ -53,6 +57,7 @@ async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
     if result is None:
         raise HTTPException(404, detail=f"No location with {location_id=} exists!")
     return LocationDetailedAPI(**result.dict())
+
 
 @router.post("/")
 async def create_new_location(adding_user: ApiUser, info: LocationNew):
@@ -63,9 +68,12 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
     except errors.UserLowTrust:
         raise HTTPException(403, "User not trusted enough!")
 
-    detailed = LocationDetailed(**info.dict(), recent_reviews=[], trust_score=trust_score)
+    detailed = LocationDetailed(
+        **info.dict(), recent_reviews=[], trust_score=trust_score
+    )
     new_id = await location_service.insert(detailed, adding_user.id)
-    return { "id": new_id }
+    return {"id": new_id}
+
 
 @router.put("/")
 async def update_location(user: ApiUser, location_info: LocationHistoryIn):
@@ -75,20 +83,25 @@ async def update_location(user: ApiUser, location_info: LocationHistoryIn):
         print(e)
         raise HTTPException(400, f"Some error occured! {type(e)}, {e}")
 
-    return { "message": "success" }
+    return {"message": "success"}
+
 
 @router.get("/{location_id}/update-history")
 async def get_location_history(location_id: PydanticObjectId, offset: int = 0):
     history = await location_service.get_history(location_id, offset)
     return history
 
+
 @router.post("/report-update/{update_id}")
-async def report_location_update(user: ApiUser, update_id: PydanticObjectId, reason: str):
+async def report_location_update(
+    user: ApiUser, update_id: PydanticObjectId, reason: str
+):
     try:
         report_id = await location_service.report_update(user, update_id, reason)
     except:
         raise HTTPException(500, "Something went wrong!")
-    return { "message": "success", "report_id": report_id }
+    return {"message": "success", "report_id": report_id}
+
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int):
@@ -98,17 +111,18 @@ def delete_location(location_id: int):
 
     pass
 
+
 #### REVIEWS
 
-review_router = APIRouter(
-    prefix = "/{location_id}/reviews",
-    tags = ["reviews"]
-)
+review_router = APIRouter(prefix="/{location_id}/reviews", tags=["reviews"])
+
 
 @review_router.get("/")
-async def get_reviews(location_id: PydanticObjectId, offset: int = 0, n: int = 10) -> ReviewsPage:
+async def get_reviews(
+    location_id: PydanticObjectId, offset: int = 0, n: int = 10
+) -> ReviewsPage:
     """
-        Get `n` reviews starting from the `offset`th entry.
+    Get `n` reviews starting from the `offset`th entry.
     """
 
     reviews, new_offset = await review_service.get_page(location_id, offset, n)
@@ -116,6 +130,7 @@ async def get_reviews(location_id: PydanticObjectId, offset: int = 0, n: int = 1
     reviews = [ReviewOut(**r.dict()) for r in reviews]
 
     return ReviewsPage(reviews=reviews, next_offset=new_offset)
+
 
 @review_router.post("/")
 async def create_review(user: ApiUser, review: ReviewInfo):
@@ -131,6 +146,7 @@ async def create_review(user: ApiUser, review: ReviewInfo):
 
     return review_id
 
+
 @review_router.put("/")
 async def update_review(user: ApiUser, review_id: PydanticObjectId, review: ReviewInfo):
     try:
@@ -140,7 +156,8 @@ async def update_review(user: ApiUser, review_id: PydanticObjectId, review: Revi
     except errors.UserDoesNotOwnReview:
         raise HTTPException(401, "Not authorized to update this review!")
 
-    return { "message": "success" }
+    return {"message": "success"}
+
 
 @review_router.delete("/")
 async def remove_review(user: ApiUser, review_id: PydanticObjectId):
@@ -151,7 +168,8 @@ async def remove_review(user: ApiUser, review_id: PydanticObjectId):
     except errors.UserDoesNotOwnReview:
         raise HTTPException(401, "Not authorized to delete this review!")
 
-    return { "message": "success" }
+    return {"message": "success"}
+
 
 @review_router.put("/{review_id}")
 async def report_review(user: ApiUser, review_id: PydanticObjectId, reason: str):
@@ -160,12 +178,16 @@ async def report_review(user: ApiUser, review_id: PydanticObjectId, reason: str)
     except errors.UserHasAlreadyReportedThisReview:
         raise HTTPException(401, "User has already reported this review!")
 
-    return { "message": "success" }
+    return {"message": "success"}
+
 
 @review_router.put("/confirmation")
-async def set_confirmation(user: ApiUser, location_id: PydanticObjectId, confirm: bool = True):
+async def set_confirmation(
+    user: ApiUser, location_id: PydanticObjectId, confirm: bool = True
+):
     # TODO: functionality has to be implemented
     # await review_service.confirm_location(user, location_id, confirm)
     raise NotImplementedError()
+
 
 router.include_router(review_router)
