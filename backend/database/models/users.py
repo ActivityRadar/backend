@@ -28,6 +28,7 @@ class UserWithoutId(UserBase):
     last_location: GeoJSONLocation | None = None
     authentication: Authentication
     archived_until: Datetime | None = None
+    admin: bool | None = None
 
 
 class User(Document, UserWithoutId):
