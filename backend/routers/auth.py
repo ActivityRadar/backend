@@ -38,6 +38,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     return user
 
 
+async def get_admin(user: Annotated[User, Depends(get_current_user)]):
+    if user.admin is None or not user.admin:
+        raise HTTPException(401, "User not authorized as admin!")
+
+    return user
+
+
 async def authenticate_user(username: str, plain: str):
     auth_exception = HTTPException(400, "Incorrect details!")
     user = await get_user_by_name(username)
