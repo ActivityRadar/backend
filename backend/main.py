@@ -1,5 +1,6 @@
 import dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .database.connection import init as init_db
 from .routers import admin, auth, locations, offers, users
@@ -7,6 +8,14 @@ from .routers import admin, auth, locations, offers, users
 dotenv.load_dotenv()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_headers=["*"],
+    allow_methods=["*"],
+)
 
 
 @app.on_event("startup")
