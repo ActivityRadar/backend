@@ -4,7 +4,7 @@ from typing import Any
 
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
-from pymongo import GEOSPHERE, IndexModel
+from pymongo import GEO2D, IndexModel
 
 from backend.database.models.shared import (
     CreationInfo,
@@ -55,7 +55,7 @@ class LocationDetailedDB(Document, LocationDetailed):
         indexes = [
             "osm_id",
             "activity_type",
-            IndexModel([("location", GEOSPHERE)], name="location_index_GEO"),
+            IndexModel([("location.coordinates", GEO2D)], name="location_index_GEO2D"),
         ]
 
 
@@ -64,7 +64,7 @@ class LocationShortDB(Document, LocationShort):
         name = "simple_locations"
         indexes = [
             "activity_type",
-            IndexModel([("location", GEOSPHERE)], name="location_index_GEO"),
+            IndexModel([("location.coordinates", GEO2D)], name="location_index_GEO2D"),
         ]
 
 
