@@ -42,11 +42,14 @@ async def get_locations_by_bbox(
 async def get_locations_around(
     long: LongitudeCoordinate,
     lat: LatitudeCoordinate,
-    radius: Annotated[float, "Distance in km"],
+    radius: Annotated[float | None, "Distance in km"] = Query(None),
     activities: list[str] | None = Query(None),
+    limit: int = Query(default=20, description="Closest n locations to be returned"),
 ) -> list[LocationShortAPI]:
     center = (long, lat)
-    short = await location_service.get_around(center, radius, activities)
+    short = await location_service.get_around(
+        center=center, radius=radius, activities=activities, limit=limit
+    )
     result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
     return result
 
