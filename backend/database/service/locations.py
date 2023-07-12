@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.operators import Box, In, NearSphere
+from beanie.operators import Box, In, Near
 
 from backend.database.models.locations import (
     LocationDetailed,
@@ -65,9 +65,7 @@ class LocationService:
             return []
 
         return await self.find_with_filters(
-            NearSphere(
-                LocationShortDB.location, center[0], center[1], max_distance=radius
-            ),
+            Near(LocationShortDB.location, center[0], center[1], max_distance=radius),
             activities=activities,
         )
 
