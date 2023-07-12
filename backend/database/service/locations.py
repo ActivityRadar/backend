@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.operators import Box, In, NearSphere
+from beanie.operators import Box, In, Near
 
 from backend.database.models.locations import (
     LocationDetailed,
@@ -59,24 +59,29 @@ class LocationService:
         )
 
     async def get_around(
-        self, center: LongLat, radius: float, activities: list[str] | None
+        self,
+        center: LongLat,
+        activities: list[str] | None,
+        radius: float | None,
+        limit: int,
     ) -> list[LocationShortDB]:
-        if radius == 0.0:
+        if radius and radius < 1 or limit == 0:
             return []
 
         return await self.find_with_filters(
-            NearSphere(
-                LocationShortDB.location, center[0], center[1], max_distance=radius
-            ),
+            Near(LocationShortDB.location, center[0], center[1], max_distance=radius),
             activities=activities,
+            limit=limit,
         )
 
-    async def find_with_filters(self, *filters, activities: list[str] | None):
+    async def find_with_filters(
+        self, *filters, activities: list[str] | None, limit: int | None = None
+    ):
         filters = list(filters)
         if activities is not None:
             filters.append(self.get_activities_filter(activities))
 
-        return await LocationShortDB.find_many(*filters).to_list()
+        return await LocationShortDB.find_many(*filters).limit(limit).to_list()
 
     def check_possible_duplicate(
         self, location: LocationDetailed
