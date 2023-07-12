@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from beanie import Document, PydanticObjectId
@@ -84,3 +85,41 @@ class UserRelation(Document):
 
     class Settings:
         name = "user_relations"
+
+
+class MessageType(str, Enum):
+    PLAIN = "plain"
+    OFFER_REACTION = "offer_reaction"
+    # ANSWER = "answer"
+
+
+class MessageBase(BaseModel):
+    sender: PydanticObjectId
+    time: datetime
+    text: str
+    # edited: bool
+
+
+class PlainMessage(MessageBase):
+    ...
+
+
+class OfferReactionMessage(MessageBase):
+    offer_id: PydanticObjectId
+
+
+Message = OfferReactionMessage | PlainMessage
+
+
+class Chat(Document):
+    id: PydanticObjectId
+    users: list[PydanticObjectId]
+    messages: list[Message]
+
+    class Settings:
+        name = "chats"
+
+
+class MessageOut(BaseModel):
+    chat_id: PydanticObjectId
+    message: Message

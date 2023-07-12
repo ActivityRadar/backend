@@ -13,6 +13,7 @@ from backend.database.service import (
     offer_service,
     relation_service,
     user_service,
+    chat_service,
 )
 from backend.routers.users import ApiUser
 from backend.util import errors
@@ -113,7 +114,10 @@ async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: st
     if not relation:
         relation = await relation_service.create_chatting(user_ids)
 
+    chat = await chat_service.get_or_create(relation)
+    await chat_service.react_to_offer(user, chat, offer_id, message)
 
+    return {"chat_id": chat.id}
 
 
 def ignore_offers_from_user():

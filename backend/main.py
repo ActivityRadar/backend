@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database.connection import init as init_db
-from .routers import admin, auth, locations, offers, users
+from .routers import admin, auth, locations, offers, users, chats
 
 dotenv.load_dotenv()
 
@@ -27,4 +27,5 @@ async def startup():
     app.include_router(locations.router)
     app.include_router(users.router)
     app.include_router(offers.router)
+    app.include_router(chats.router)
     # app.include_router(events.router)
