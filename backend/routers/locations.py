@@ -59,6 +59,18 @@ async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
     return LocationDetailedAPI(**result.dict())
 
 
+@router.get("/bulk")
+async def get_location_bulk(location_ids: list[PydanticObjectId] = Query(alias="id")):
+    ids = list(set(location_ids))  # remove duplicates
+    locations = []
+    for id in ids:
+        loc = await location_service.get(id)
+        if loc:
+            locations.append(loc)
+
+    return [LocationDetailedAPI(**loc.dict()) for loc in locations]
+
+
 @router.post("/")
 async def create_new_location(adding_user: ApiUser, info: LocationNew):
     try:
