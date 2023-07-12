@@ -1,21 +1,22 @@
 from datetime import datetime, timedelta
-from typing import Annotated
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Query
 
 from backend.database.models.offers import (
-    Offer,
     OfferIn,
-    OfferTime,
+    OfferStatus,
     OfferTimeFlexible,
     OfferTimeSingle,
-    OfferType,
 )
-from backend.database.service import offer_service
+from backend.database.service import (
+    offer_service,
+    relation_service,
+    user_service,
+)
 from backend.routers.users import ApiUser
 from backend.util import errors
-from backend.util.types import LatitudeCoordinate, LongitudeCoordinate, LongLat
+from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
 router = APIRouter(prefix="/offers", tags=["offers"])
 
@@ -46,11 +47,20 @@ def create_search_time(time_from: datetime | None, time_until: datetime | None):
 @router.post("/")
 async def create_offer(user: ApiUser, offer_info: OfferIn):
     try:
-        await offer_service.create(user, offer_info)
+        id = await offer_service.create(user, offer_info)
     except errors.LocationDoesNotExist:
         raise HTTPException(404, "Location not found!")
 
-    return {"message": "success"}
+    return {"message": "success", "offer_id": id}
+
+
+@router.get("/")
+async def get_offers(user: ApiUser, id: list[PydanticObjectId] = Query()):
+    ids = list(set(id))  # remove duplicates
+
+    offers = offer_service.get(ids)
+
+    return offers
 
 
 @router.get("/location/{location_id}")
@@ -87,20 +97,23 @@ async def get_offers_in_area(
 
 
 @router.put("/{offer_id}")
-def contact_offerer(offer_id: int):
-    pass
+async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: str):
+    try:
+        offer = (await offer_service.get([offer_id]))[0]
+    except IndexError:
+        raise HTTPException(404, "Offer not found!")
+
+    offerer = await user_service.get_by_id(offer.user_info.id)
+    if not offerer:
+        # should not happen
+        raise HTTPException(404, "Offerer does not exist (anymore)!")
+
+    user_ids = [user.id, offer.user_info.id]
+    relation = await relation_service.has_relation_to(user.id, offerer.id)
+    if not relation:
+        relation = await relation_service.create_chatting(user_ids)
 
 
-@router.put("/me/{offer_id}")
-def edit_offer():
-    def close_offer():
-        pass
-
-    def hide_offer():
-        pass
-
-    def unhide_offer():
-        pass
 
 
 def ignore_offers_from_user():

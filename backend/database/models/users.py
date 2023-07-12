@@ -74,6 +74,7 @@ class RelationStatus(str, Enum):
     ACCEPTED = "accepted"
     PENDING = "pending"
     DECLINED = "declined"
+    CHATTING = "chatting"
 
 
 class UserRelation(Document):

@@ -29,10 +29,10 @@ class OfferVisibility(str, Enum):
 
 class OfferStatus(str, Enum):
     OPEN = "open"
-    DELETED = "deleted"
     CLOSED = "closed"
     TIMEOUT = "timeout"
-    ARCHIVED = "archived"
+    # DELETED = "deleted"
+    # ARCHIVED = "archived"
 
 
 class OfferLocationBase(BaseModel):

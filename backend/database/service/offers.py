@@ -45,7 +45,7 @@ class TimesMatcher:
 class OfferService:
     tm = TimesMatcher()
 
-    async def create(self, user: User, offer: OfferIn):
+    async def create(self, user: User, offer: OfferIn) -> PydanticObjectId:
         # TODO: check if user is eligible to create an offer.
 
         location = offer.location
@@ -55,18 +55,16 @@ class OfferService:
                 raise errors.LocationDoesNotExist()
             location.coords = loc.location
 
-        new_offer = Offer(
+        new_offer = await Offer(
             creation_date=datetime.utcnow(),
             user_info=OfferCreatorInfo(**user.dict()),
             status=OfferStatus.OPEN,
             **offer.dict(),
-        )
-
-        await new_offer.insert()
+        ).insert()
 
         return new_offer.id
 
-    async def _check_and_set_timeout(self, offers):
+    async def _check_and_set_timeout(self, offers) -> list[Offer]:
         now = datetime.utcnow()
 
         filtered_offers = []
@@ -83,13 +81,17 @@ class OfferService:
 
         return filtered_offers
 
-    def _filter_date_time(self, offers: list[Offer], date_time: OfferTime | None):
+    def _filter_date_time(
+        self, offers: list[Offer], date_time: OfferTime | None
+    ) -> list[Offer]:
         if not date_time or date_time.type == OfferType.FLEXIBLE:
             return offers
 
         return [offer for offer in offers if self.tm.match(offer.time, date_time)]
 
-    async def _get_with_filters(self, user: User, filters: list[BaseFindOperator]):
+    async def _get_with_filters(
+        self, user: User, filters: list[BaseFindOperator]
+    ) -> list[Offer]:
         filters.extend(
             [
                 Eq(Offer.status, OfferStatus.OPEN),
@@ -115,6 +117,11 @@ class OfferService:
 
         return offers
 
+    async def get(self, ids: list[PydanticObjectId]) -> list[Offer]:
+        offers = await Offer.find(In(Offer.id, ids)).to_list()
+
+        return offers
+
     async def get_at_location(
         self, user: User, location_id: PydanticObjectId, date_time: OfferTime
     ) -> list[Offer]:
@@ -137,7 +144,7 @@ class OfferService:
         distance: float,  # in meters
         time: OfferTime,
         activities: list[str] | None,
-    ):
+    ) -> list[Offer]:
         filters: list[BaseFindOperator] = [
             Near(Offer.location.coords, *center, max_distance=distance),
         ]
