@@ -156,5 +156,31 @@ class OfferService:
 
         return self._filter_date_time(offers, time)
 
-    async def delete(self):
-        pass
+    async def _get_offer_with_checks(
+        self, user: User, offer_id: PydanticObjectId
+    ) -> Offer:
+        offer = await Offer.get(offer_id)
+        if not offer:
+            raise errors.OfferDoesNotExist()
+
+        if offer.user_info.id != user.id:
+            raise errors.UserDoesNotOwnOffer()
+
+        return offer
+
+    async def set_status(
+        self, user: User, offer_id: PydanticObjectId, status: OfferStatus
+    ):
+        offer = await self._get_offer_with_checks(user, offer_id)
+
+        # TODO: actions connected to status change
+
+        offer.status = status
+        await offer.save()
+
+    async def delete(self, user: User, offer_id: PydanticObjectId):
+        offer = await self._get_offer_with_checks(user, offer_id)
+
+        # TODO: notify potential partners that the offer has been closed
+
+        await offer.delete()

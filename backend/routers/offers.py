@@ -97,6 +97,20 @@ async def get_offers_in_area(
     )
 
 
+@router.put("/me/{offer_id}")
+async def set_offer_status(
+    user: ApiUser, offer_id: PydanticObjectId, status: OfferStatus
+):
+    try:
+        await offer_service.set_status(user, offer_id, status)
+    except errors.UserDoesNotOwnOffer:
+        raise HTTPException(401, "User does not own offer and cant modify it!")
+    except errors.OfferDoesNotExist:
+        raise HTTPException(404, "Offer does not exist!")
+
+    return {"message": "success"}
+
+
 @router.put("/{offer_id}")
 async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: str):
     try:
@@ -118,6 +132,18 @@ async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: st
     await chat_service.react_to_offer(user, chat, offer_id, message)
 
     return {"chat_id": chat.id}
+
+
+@router.delete("/{offer_id}")
+async def delete_offer(user: ApiUser, offer_id: PydanticObjectId):
+    try:
+        await offer_service.delete(user, offer_id)
+    except errors.OfferDoesNotExist:
+        raise HTTPException(404, "Offer does not exist!")
+    except errors.UserDoesNotOwnOffer:
+        raise HTTPException(401, "User does not own offer!")
+
+    return {"message": "success"}
 
 
 def ignore_offers_from_user():
