@@ -217,12 +217,7 @@ class RelationService:
 
         f = await UserRelation.find_one(All(UserRelation.users, ids))
         if f is None:
-            f = await UserRelation(
-                users=ids,
-                creation_date=datetime.utcnow(),
-                status=RelationStatus.PENDING,
-            ).insert()
-
+            f = await self._create(ids, RelationStatus.PENDING)
             send_request()
 
             return f.id
@@ -247,6 +242,14 @@ class RelationService:
                 # user sent request twice
                 else:
                     raise E.UserHasPendingRequest()
+            case RelationStatus.CHATTING:
+                # users were only chatting until now
+                # requesting user has to go first
+                if from_user.id == f.users[1]:
+                    f.users.reverse()
+                f.status = RelationStatus.PENDING
+                await f.save()
+                send_request()
             case _:
                 raise NotImplementedError()
 
@@ -341,6 +344,25 @@ class RelationService:
                 users.append(await _get(r))
 
         return users
+
+    async def has_relation_to(
+        self, user_id_1: PydanticObjectId, user_id_2: PydanticObjectId
+    ) -> UserRelation | None:
+        f = await UserRelation.find_one(All(UserRelation.users, [user_id_1, user_id_2]))
+        return f
+
+    async def _create(self, ids, status):
+        r = await UserRelation(
+            users=ids,
+            creation_date=datetime.utcnow(),
+            status=status,
+        ).insert()
+
+        return r
+
+    async def create_chatting(self, ids: list[PydanticObjectId]):
+        r = await self._create(ids=ids, status=RelationStatus.CHATTING)
+        return r
 
 
 # global instances that can be imported by other modules
