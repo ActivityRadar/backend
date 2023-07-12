@@ -56,10 +56,12 @@ async def create_offer(user: ApiUser, offer_info: OfferIn):
 
 
 @router.get("/")
-async def get_offers(user: ApiUser, id: list[PydanticObjectId] = Query()):
-    ids = list(set(id))  # remove duplicates
+async def get_offers(
+    user: ApiUser, offer_ids: list[PydanticObjectId] = Query(alias="id")
+):
+    ids = list(set(offer_ids))  # remove duplicates
 
-    offers = offer_service.get(ids)
+    offers = await offer_service.get(ids)
 
     return offers
 
