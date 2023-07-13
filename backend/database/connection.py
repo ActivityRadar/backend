@@ -19,7 +19,7 @@ from backend.database.models.users import (
     UserRelation,
 )
 
-client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STIRNG"))
+client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STRING"))
 
 
 async def init():

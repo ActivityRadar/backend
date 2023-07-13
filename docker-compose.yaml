@@ -1,0 +1,38 @@
+version: '3.8'
+
+name: activity-radar
+
+volumes:
+  mongodb_volume:
+
+services:
+  mongo:
+    container_name: mongodb-container
+    image: mongo:latest
+    restart: always
+    ports:
+      - 27018:27017 # to make the DB accessible from the outside via port 27018
+    volumes:
+      - "mongodb_volume:/data/db"
+
+  fastapi:
+    container_name: fastapi-container
+    build: .
+    restart: always
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongo
+    environment:
+      MONGODB_CONNECTION_STRING: mongodb://mongo:27017/
+
+  mongo-express:
+    container_name: mongo-express-container
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
