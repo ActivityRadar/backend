@@ -1,9 +1,11 @@
-version: '3.8'
+version: "3.8"
 
 name: activity-radar
 
 volumes:
   mongodb_volume:
+
+env_file: .env
 
 services:
   mongo:
@@ -23,8 +25,6 @@ services:
       - 8000:8000
     depends_on:
       - mongo
-    environment:
-      MONGODB_CONNECTION_STRING: mongodb://mongo:27017/
 
   mongo-express:
     container_name: mongo-express-container
@@ -35,4 +35,4 @@ services:
     depends_on:
       - mongo
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
+      ME_CONFIG_MONGODB_URL: "${MONGODB_CONNECTION_STRING}"
