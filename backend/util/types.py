@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Query
 
-### Geospatial types
+# Geospatial types
 LongitudeCoordinate = Annotated[float, Query(ge=-180.0, le=180.0)]
 LatitudeCoordinate = Annotated[float, Query(ge=-90.0, le=90.0)]
 
@@ -17,7 +17,7 @@ def to_4_corners(b: BoundingBox) -> list[list[float]]:
     return [lleft, lright, uleft, uright]
 
 
-### Time types
+# Time types
 Time = time
 Datetime = datetime
 
@@ -28,7 +28,7 @@ TimeSlotFlexible = tuple[Time, Time]
 TimeSlotFixed = tuple[Datetime, Datetime]
 
 
-### Trust scores
+# Trust scores
 TrustScore = int
 UserTrustScore = TrustScore
 LocationTrustScore = TrustScore

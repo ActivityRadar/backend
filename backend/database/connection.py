@@ -11,7 +11,13 @@ from backend.database.models.locations import (
     Review,
 )
 from backend.database.models.offers import Offer
-from backend.database.models.users import NewUser, User, UserPasswordReset, UserRelation
+from backend.database.models.users import (
+    Chat,
+    NewUser,
+    User,
+    UserPasswordReset,
+    UserRelation,
+)
 
 client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STIRNG"))
 
@@ -26,6 +32,7 @@ async def init():
         LocationHistory,
         Offer,
         LocationUpdateReport,
+        Chat,
     ]
 
     for d in documents:

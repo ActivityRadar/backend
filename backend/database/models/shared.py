@@ -26,7 +26,7 @@ class PhotoInfo(BaseModel):
 
 class GeoJSONLocation(BaseModel):
     type: str = "Point"
-    coordinates: list[float]
+    coordinates: LongLat
 
 
 class GeoJSONLine(BaseModel):

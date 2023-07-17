@@ -91,10 +91,6 @@ class LocationDoesNotExist(Exception):
     ...
 
 
-class LocationDoesNotExist(Exception):
-    ...
-
-
 class InvalidUpdateType(Exception):
     ...
 
@@ -116,4 +112,10 @@ class TagDoesNotExist(Exception):
 
 
 class UserHasTooManyOngoingUpdateReports(Exception):
+    ...
+
+class OfferDoesNotExist(Exception):
+    ...
+
+class UserDoesNotOwnOffer(Exception):
     ...
