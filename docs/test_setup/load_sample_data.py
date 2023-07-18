@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import sys
 from datetime import datetime
 from typing import Any
@@ -16,10 +15,10 @@ sys.path.append("../../")
 from backend.database.connection import client
 from backend.database.models.locations import LocationDetailedDB, LocationShortDB
 from backend.database.models.shared import LocationCreators
-from backend.util.constants import DATE_FMT
+from backend.util import constants
 
 load_dotenv()
-client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STRING"))
+client = AsyncIOMotorClient(constants.MONGODB_CONNECTION_STRING)
 
 
 async def init_db():
@@ -75,7 +74,7 @@ def load_data_from_overpass():
     """
     centers = api.get(query, build=False)
 
-    now_str = datetime.now().strftime(DATE_FMT)
+    now_str = datetime.now().strftime(constants.DATE_FMT)
 
     merge(geometries, centers)
     set_type(geometries)
@@ -94,13 +93,13 @@ def osm_to_mongo(loc):
         "location": dict(loc.center),
         "creation": {
             "created_by": LocationCreators.OSM,
-            "date": datetime.strptime(loc.timestamp, DATE_FMT),
+            "date": datetime.strptime(loc.timestamp, constants.DATE_FMT),
         },
         "osm_id": loc.id,
         "tags": {k: v for k, v in loc.tags.items() if k != "sport"},
         "trust_score": 1000,
         "recent_reviews": [],
-        "last_modified": datetime.strptime(loc.timestamp, DATE_FMT),
+        "last_modified": datetime.strptime(loc.timestamp, constants.DATE_FMT),
     }
     if loc.tags.name is not None:
         d |= {"name": loc.tags.name}

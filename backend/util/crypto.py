@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta
 
 from beanie import PydanticObjectId
@@ -8,10 +7,12 @@ from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
+from backend.util import constants
+
 load_dotenv()
 
 ALGORITHM = "HS256"
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or ""
+JWT_SECRET_KEY = constants.JWT_SECRET_KEY
 SESSION_TOKEN_EXPIRE = timedelta(minutes=20)
 PASSWORD_RESET_TOKEN_EXPIRE = timedelta(hours=2)
 
