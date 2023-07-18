@@ -1,0 +1,22 @@
+# This file overrides settings in docker-compose.yaml if
+# `docker compose up` (without -f ...) is invoked.
+#
+# The purpose is usage for development and testing, where traefik might not be needed.
+# It is used to use the traefik network locally and not search for an existing one.
+# Also this exposes the backend on port 80 for easy access.
+
+version: "3.8"
+
+name: activity-radar
+
+volumes:
+  mongodb_volume:
+
+networks:
+  traefik-public:
+    external: false
+
+services:
+  fastapi:
+    ports:
+      - 80:80
