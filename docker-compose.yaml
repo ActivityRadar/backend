@@ -5,8 +5,6 @@ name: activity-radar
 volumes:
   mongodb_volume:
 
-env_file: .env
-
 services:
   mongo:
     container_name: mongodb-container
