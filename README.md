@@ -48,3 +48,27 @@ Try it out by running `pre-commit run --all-files` from the project root.
 For the `ggshield` pre-commit hook, you need to have a `GitGuardian` account and
 generate an API-key. That key has to be put into the `.env` file in order to let
 `ggshield` work and protect you from sharing secrets.
+
+## Deployment
+
+For deploying the backend, we are using `docker-compose`. For https support, we use
+`traefik` with `Let's Encrypt`.
+
+We currently have a test and a production setup. Either way, you'll have to do the
+following:
+
+1. Install `docker` and `docker-compose`.
+2. Set the variables in the `.env` file:
+   - `LETSENCRYPT_EMAIL`: To the email you are using for `Let's Encrypt`.
+   - `DOMAIN_NAME`: To the domain that redirects to your server instance.
+
+### Test setup
+
+1. Run `docker-compose up` to start the container stack without traefik.
+
+### Production setup
+
+1. Run `docker network create traefik-public` to create the docker network that
+   `traefik` uses to communicate with `fastapi`.
+2. Run `docker-compose -f docker-compose.traefik.yaml up` to start `traefik`.
+3. Run `docker-compose -f docker-compose.yaml up` to start the rest of the containers.

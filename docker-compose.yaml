@@ -5,6 +5,12 @@ name: activity-radar
 volumes:
   mongodb_volume:
 
+networks:
+  traefik-public:
+    external: true
+  mongo:
+    external: false
+
 services:
   mongo:
     container_name: mongodb-container
@@ -14,14 +20,65 @@ services:
       - 27018:27017 # to make the DB accessible from the outside via port 27018
     volumes:
       - "mongodb_volume:/data/db"
+    networks:
+      - mongo
 
   fastapi:
     container_name: fastapi-container
+    command:
+      [
+        "uvicorn",
+        "backend.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "80",
+        "--proxy-headers",
+      ]
     build: .
     restart: always
-    ports:
-      - 8000:8000
+    labels:
+      # Tells traefik to connect to this container
+      - traefik.enable=true
+
+      # Tells traefik to listen on port 80 for this one
+      - traefik.http.services.app.loadbalancer.server.port=80
+
+      # Tells traefik to use http as scheme
+      - traefik.http.routers.app-http.entrypoints=http
+
+      # Tells traefik which requests to forward to this container.
+      # Only request coming in via DOMAIN_NAME will be forwarded.
+      - traefik.http.routers.app-http.rule=Host(`${DOMAIN_NAME}`)
+      # - traefik.http.routers.app-http.rule=Host(`api.activity-radar.com`)
+
+      # Tells traefik to use https as scheme
+      - traefik.http.routers.app-https.entrypoints=https
+
+      # Tells traefik which requests to forward to this container.
+      # Only request coming in via DOMAIN_NAME will be forwarded.
+      - traefik.http.routers.app-https.rule=Host(`${DOMAIN_NAME}`)
+      # - traefik.http.routers.app-http.rule=Host(`api.activity-radar.com`)
+
+      # Tells traefik to use tls
+      - traefik.http.routers.app-https.tls=true
+
+      # Using Let's Encrypt as certificate resolver
+      - traefik.http.routers.app-https.tls.certresolver=le
+
+      # redirecting http requests to https via some middleware
+      - traefik.http.middlewares.https-redirect.redirescheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirescheme.permanent=true
+      - traefik.http.routers.app-http.middlewares=https-redirect
+
+      # Tells traefik which docker network to use
+      # This one has to be created manually, if external = true is set:
+      # `docker network create traefik-public`
+      - traefik.docker.network=traefik-public
     depends_on:
+      - mongo
+    networks:
+      - traefik-public
       - mongo
 
   mongo-express:
@@ -34,3 +91,5 @@ services:
       - mongo
     environment:
       ME_CONFIG_MONGODB_URL: "${MONGODB_CONNECTION_STRING}"
+    networks:
+      - mongo
