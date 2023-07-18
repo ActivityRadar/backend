@@ -1,5 +1,3 @@
-import os
-
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -18,8 +16,9 @@ from backend.database.models.users import (
     UserPasswordReset,
     UserRelation,
 )
+from backend.util import constants
 
-client = AsyncIOMotorClient(os.getenv("MONGODB_CONNECTION_STRING"))
+client = AsyncIOMotorClient(constants.MONGODB_CONNECTION_STRING)
 
 
 async def init():

@@ -1,11 +1,8 @@
-import dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database.connection import init as init_db
-from .routers import admin, auth, locations, offers, users, chats
-
-dotenv.load_dotenv()
+from .routers import admin, auth, chats, locations, offers, users
 
 app = FastAPI()
 
