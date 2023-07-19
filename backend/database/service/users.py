@@ -62,7 +62,7 @@ class UserService:
         users = await User.find_many(RegEx(User.username, regex, options="i")).to_list()
         return users
 
-    async def create_user(self, user_info: UserIn):
+    async def create_user(self, user_info: UserIn) -> NewUser:
         u = await self.get_by_username(user_info.username)
         if u:
             raise E.UserWithNameExists()
@@ -81,7 +81,7 @@ class UserService:
             trust_score=INITIAL_TRUST_SCORE,
         ).insert()
 
-        return u.id
+        return u
 
     async def archive(self, user: User) -> bool:
         if user.archived_until is not None:
