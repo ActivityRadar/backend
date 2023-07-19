@@ -141,11 +141,11 @@ async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
 async def create_user(user_info: UserIn):
     # TODO: This should probably be protected with an API key.
     try:
-        u_id = await user_service.create_user(user_info)
+        u = await user_service.create_user(user_info)
     except E.UserWithNameExists:
         raise HTTPException(400, "User with name exists!")
 
-    return {"id": u_id}
+    return {"id": u.id}
 
 
 @router.get("/reset_password/{username}")
