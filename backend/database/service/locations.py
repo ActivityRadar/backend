@@ -29,6 +29,11 @@ class LocationService:
     def get_activities_filter(self, activities):
         return In(LocationShortDB.activity_type, activities)
 
+    async def _insert(self, location: LocationDetailedDB):
+        loc = await location.insert()
+        await LocationShortDB(**loc.dict()).insert()
+        return loc
+
     async def insert(
         self, location: LocationDetailed, user_id: PydanticObjectId
     ) -> PydanticObjectId:
@@ -37,10 +42,11 @@ class LocationService:
         creation = CreationInfo(
             created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id
         )
-        loc = await LocationDetailedDB(
+        loc = LocationDetailedDB(
             **location.dict(), last_modified=creation.date, creation=creation
-        ).insert()
-        await LocationShortDB(**loc.dict()).insert()
+        )
+        loc = await self._insert(loc)
+
         return loc.id
 
     async def get(self, id: PydanticObjectId) -> LocationDetailedDB | None:

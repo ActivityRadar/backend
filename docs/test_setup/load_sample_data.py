@@ -13,8 +13,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 sys.path.append("../../")
 
 from backend.database.connection import client
-from backend.database.models.locations import LocationDetailedDB, LocationShortDB
+from backend.database.models.locations import (
+    LocationDetailed,
+    LocationDetailedDB,
+    LocationShortDB,
+)
 from backend.database.models.shared import LocationCreators
+from backend.database.service import location_service
 from backend.util import constants
 
 load_dotenv()
@@ -119,6 +124,11 @@ async def insert_all(elements):
     await LocationShortDB.insert_many(short)
 
 
+async def insert_all_service(elements):
+    for e in elements:
+        await location_service._insert(LocationDetailedDB(**e))
+
+
 async def reset_collections():
     await LocationShortDB.find({}).delete()
     await LocationDetailedDB.find({}).delete()
@@ -142,7 +152,7 @@ async def main():
             sys.exit(1)
 
     elements = data["elements"]
-    await insert_all(elements)
+    await insert_all_service(elements)
 
 
 if __name__ == "__main__":
