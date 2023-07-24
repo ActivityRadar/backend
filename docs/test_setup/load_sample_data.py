@@ -126,7 +126,7 @@ async def insert_all(elements):
 
 async def insert_all_service(elements):
     for e in elements:
-        await location_service._insert(LocationDetailedDB(**e))
+        await location_service._insert(LocationDetailedDB(**osm_to_mongo(e)))
 
 
 async def reset_collections():
