@@ -1,0 +1,17 @@
+FROM python:3.10
+
+WORKDIR /app
+
+# To show all python print statements in the logs
+ENV PYTHONUNBUFFERED 1
+
+COPY ./ /app/
+
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /app/docs/test_setup/requirements.txt
+
+# COPY ./backend /app/backend
+
+WORKDIR /app/docs/test_setup/
+
+RUN python load_sample_data.py
