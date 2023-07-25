@@ -90,7 +90,7 @@ async def change_user_password(user: ApiUser, form_data: ChangePasswordForm = Bo
 
 
 @photo_router.post("/")
-async def create_profile_photo(user: ApiUser, photo_url: str):
+async def create_profile_photo(user: ApiUser, photo_url: str = Body()):
     photo_info = PhotoInfo(
         user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
     )
