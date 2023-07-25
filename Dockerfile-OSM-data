@@ -13,5 +13,3 @@ RUN pip install --no-cache-dir --upgrade -r /app/docs/test_setup/requirements.tx
 # COPY ./backend /app/backend
 
 WORKDIR /app/docs/test_setup/
-
-RUN python load_sample_data.py
