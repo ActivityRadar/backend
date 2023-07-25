@@ -67,8 +67,8 @@ services:
       - traefik.http.routers.app-https.tls.certresolver=le
 
       # redirecting http requests to https via some middleware
-      - traefik.http.middlewares.https-redirect.redirescheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirescheme.permanent=true
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.app-http.middlewares=https-redirect
 
       # Tells traefik which docker network to use
