@@ -51,11 +51,11 @@ class NewUser(Document, UserWithoutId):
         name = "users"
 
 
-class UserAPI(UserBase):
+class UserApiOut(UserBase):
     id: PydanticObjectId
 
 
-class UserIn(UserBase):
+class UserApiIn(UserBase):
     email: str
     password: str
 

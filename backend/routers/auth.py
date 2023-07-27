@@ -1,8 +1,9 @@
 from typing import Annotated
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
 
 from backend.database.models.users import User
 from backend.database.service import user_service
@@ -15,6 +16,11 @@ from backend.util.crypto import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
+
+class LoginForm(BaseModel):
+    username: str = Form()
+    password: str = Form()
 
 
 async def get_user(id: PydanticObjectId) -> User | None:
@@ -58,7 +64,7 @@ async def authenticate_user(username: str, plain: str):
 
 
 @router.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def login(form_data: Annotated[LoginForm, Depends()]):
     user = await authenticate_user(form_data.username, form_data.password)
     token = create_access_token(data={"sub": str(user.id)})
 
