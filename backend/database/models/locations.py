@@ -98,9 +98,7 @@ TagContent = str
 
 class TagChange(BaseModel):
     mode: TagChangeType
-    content: TagContent | tuple[
-        TagContent, TagContent
-    ]  # Any for Add and delete, tuple for changes
+    content: TagContent | list[TagContent]  # Any for Add and delete, tuple for changes
 
 
 class LocationHistoryIn(BaseModel):

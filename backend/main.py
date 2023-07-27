@@ -1,8 +1,8 @@
-import json
-
+import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.routing import APIRoute
 
 from .database.connection import init as init_db
 from .routers import admin, auth, chats, locations, offers, users
@@ -30,15 +30,20 @@ async def startup():
     app.include_router(chats.router)
     # app.include_router(events.router)
 
-    with open("openapi.json", "w") as f:
-        json.dump(
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            route: APIRoute = route
+            route.operation_id = route.name
+
+    with open("openapi.yaml", "w") as f:
+        yaml.dump(
             get_openapi(
                 title=app.title,
                 version=app.version,
                 openapi_version=app.openapi_version,
                 description=app.description,
                 routes=app.routes,
-                # openapi_prefix=app.openapi_prefix,
             ),
             f,
+            sort_keys=False,
         )
