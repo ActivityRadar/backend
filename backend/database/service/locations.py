@@ -5,10 +5,10 @@ from beanie.operators import Box, In, Near
 
 from backend.database.models.locations import (
     LocationDetailed,
-    LocationDetailedDB,
+    LocationDetailedDb,
     LocationHistory,
     LocationHistoryIn,
-    LocationShortDB,
+    LocationShortDb,
     LocationUpdateReport,
     TagChangeType,
 )
@@ -27,11 +27,11 @@ class LocationService:
         return
 
     def get_activities_filter(self, activities):
-        return In(LocationShortDB.activity_type, activities)
+        return In(LocationShortDb.activity_type, activities)
 
-    async def _insert(self, location: LocationDetailedDB):
+    async def _insert(self, location: LocationDetailedDb):
         loc = await location.insert()
-        await LocationShortDB(**loc.dict()).insert()
+        await LocationShortDb(**loc.dict()).insert()
         return loc
 
     async def insert(
@@ -42,22 +42,22 @@ class LocationService:
         creation = CreationInfo(
             created_by=LocationCreators.APP, date=datetime.now(), user_id=user_id
         )
-        loc = LocationDetailedDB(
+        loc = LocationDetailedDb(
             **location.dict(), last_modified=creation.date, creation=creation
         )
         loc = await self._insert(loc)
 
         return loc.id
 
-    async def get(self, id: PydanticObjectId) -> LocationDetailedDB | None:
-        return await LocationDetailedDB.get(id)
+    async def get(self, id: PydanticObjectId) -> LocationDetailedDb | None:
+        return await LocationDetailedDb.get(id)
 
     async def get_bbox_short(
         self, bbox: BoundingBox, activities: list[str] | None
-    ) -> list[LocationShortDB]:
+    ) -> list[LocationShortDb]:
         return await self.find_with_filters(
             Box(
-                LocationShortDB.location,
+                LocationShortDb.location,
                 lower_left=list(bbox[0]),
                 upper_right=list(bbox[1]),
             ),
@@ -70,12 +70,12 @@ class LocationService:
         activities: list[str] | None,
         radius: float | None,
         limit: int,
-    ) -> list[LocationShortDB]:
+    ) -> list[LocationShortDb]:
         if radius and radius < 1 or limit == 0:
             return []
 
         return await self.find_with_filters(
-            Near(LocationShortDB.location, center[0], center[1], max_distance=radius),
+            Near(LocationShortDb.location, center[0], center[1], max_distance=radius),
             activities=activities,
             limit=limit,
         )
@@ -87,7 +87,7 @@ class LocationService:
         if activities is not None:
             filters.append(self.get_activities_filter(activities))
 
-        return await LocationShortDB.find_many(*filters).limit(limit).to_list()
+        return await LocationShortDb.find_many(*filters).limit(limit).to_list()
 
     def check_possible_duplicate(
         self, location: LocationDetailed
@@ -109,7 +109,7 @@ class LocationService:
     async def update(self, user: User, history: LocationHistoryIn):
         # TODO: Acquire a write lock, so between reading the location data
         # and writing them there cant be another update...
-        loc = await LocationDetailedDB.get(history.location_id)
+        loc = await LocationDetailedDb.get(history.location_id)
         if not loc:
             raise errors.LocationDoesNotExist()
 
@@ -124,13 +124,13 @@ class LocationService:
         await loc.save()
 
         # Update the short version
-        await LocationShortDB(**loc.dict()).save()
+        await LocationShortDb(**loc.dict()).save()
         # loc_short = await LocationShortDB.get(location_id)
 
         # TODO: add location history entry
         await history.save()
 
-    def _update(self, location: LocationDetailedDB, history: LocationHistory):
+    def _update(self, location: LocationDetailedDb, history: LocationHistory):
         if history.after is not None:
             if history.before is None:
                 raise errors.InvalidHistory()

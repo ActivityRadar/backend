@@ -15,8 +15,8 @@ sys.path.append("../../")
 from backend.database.connection import client
 from backend.database.models.locations import (
     LocationDetailed,
-    LocationDetailedDB,
-    LocationShortDB,
+    LocationDetailedDb,
+    LocationShortDb,
 )
 from backend.database.models.shared import LocationCreators
 from backend.database.service import location_service
@@ -27,8 +27,8 @@ client = AsyncIOMotorClient(constants.MONGODB_CONNECTION_STRING)
 
 
 async def init_db():
-    await init_beanie(database=client.AR, document_models=[LocationDetailedDB])
-    await init_beanie(database=client.AR, document_models=[LocationShortDB])
+    await init_beanie(database=client.AR, document_models=[LocationDetailedDb])
+    await init_beanie(database=client.AR, document_models=[LocationShortDb])
 
 
 def merge(geometries, centers):
@@ -117,21 +117,21 @@ def osm_to_mongo(loc):
 
 async def insert_all(elements):
     es = [osm_to_mongo(e) for e in elements]
-    detailed = [LocationDetailedDB(**e) for e in es]
-    ds = await LocationDetailedDB.insert_many(detailed)
+    detailed = [LocationDetailedDb(**e) for e in es]
+    ds = await LocationDetailedDb.insert_many(detailed)
 
-    short = [LocationShortDB(**e, id=d) for (e, d) in zip(es, ds.inserted_ids)]
-    await LocationShortDB.insert_many(short)
+    short = [LocationShortDb(**e, id=d) for (e, d) in zip(es, ds.inserted_ids)]
+    await LocationShortDb.insert_many(short)
 
 
 async def insert_all_service(elements):
     for e in elements:
-        await location_service._insert(LocationDetailedDB(**osm_to_mongo(e)))
+        await location_service._insert(LocationDetailedDb(**osm_to_mongo(e)))
 
 
 async def reset_collections():
-    await LocationShortDB.find({}).delete()
-    await LocationDetailedDB.find({}).delete()
+    await LocationShortDb.find({}).delete()
+    await LocationDetailedDb.find({}).delete()
 
 
 async def main():

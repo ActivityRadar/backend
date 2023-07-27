@@ -6,11 +6,11 @@ from fastapi import APIRouter, HTTPException, Query
 import backend.util.errors as errors
 from backend.database.models.locations import (
     LocationDetailed,
-    LocationDetailedAPI,
+    LocationDetailedApi,
     LocationHistoryIn,
     LocationNew,
-    LocationShortAPI,
-    LocationShortDB,
+    LocationShortApi,
+    LocationShortDb,
     ReviewInfo,
     ReviewOut,
     ReviewsPage,
@@ -29,12 +29,12 @@ async def get_locations_by_bbox(
     east: LongitudeCoordinate,
     north: LatitudeCoordinate,
     activities: list[str] | None = Query(None),
-) -> list[LocationShortAPI]:
+) -> list[LocationShortApi]:
     bbox = ((west, south), (east, north))
-    short: list[LocationShortDB] = await location_service.get_bbox_short(
+    short: list[LocationShortDb] = await location_service.get_bbox_short(
         bbox, activities
     )
-    result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
+    result: list[LocationShortApi] = [LocationShortApi(**loc.dict()) for loc in short]
     return result
 
 
@@ -45,21 +45,21 @@ async def get_locations_around(
     radius: Annotated[float | None, "Distance in km"] = Query(None),
     activities: list[str] | None = Query(None),
     limit: int = Query(default=20, description="Closest n locations to be returned"),
-) -> list[LocationShortAPI]:
+) -> list[LocationShortApi]:
     center = (long, lat)
     short = await location_service.get_around(
         center=center, radius=radius, activities=activities, limit=limit
     )
-    result: list[LocationShortAPI] = [LocationShortAPI(**loc.dict()) for loc in short]
+    result: list[LocationShortApi] = [LocationShortApi(**loc.dict()) for loc in short]
     return result
 
 
 @router.get("/{location_id}")
-async def get_location(location_id: PydanticObjectId) -> LocationDetailedAPI:
+async def get_location(location_id: PydanticObjectId) -> LocationDetailedApi:
     result = await location_service.get(location_id)
     if result is None:
         raise HTTPException(404, detail=f"No location with {location_id=} exists!")
-    return LocationDetailedAPI(**result.dict())
+    return LocationDetailedApi(**result.dict())
 
 
 @router.get("/bulk")
@@ -71,7 +71,7 @@ async def get_location_bulk(location_ids: list[PydanticObjectId] = Query(alias="
         if loc:
             locations.append(loc)
 
-    return [LocationDetailedAPI(**loc.dict()) for loc in locations]
+    return [LocationDetailedApi(**loc.dict()) for loc in locations]
 
 
 @router.post("/")

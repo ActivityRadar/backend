@@ -8,7 +8,7 @@ from pymongo import DESCENDING, GEO2D, GEOSPHERE, IndexModel
 
 from backend.util.types import Datetime, TimeSlotFixed, TimeSlotFlexible
 
-from .shared import GeoJSONLocation, UserBase
+from .shared import GeoJsonLocation, UserBase
 
 
 class OfferType(str, Enum):
@@ -36,12 +36,12 @@ class OfferStatus(str, Enum):
 
 
 class OfferLocationBase(BaseModel):
-    coords: GeoJSONLocation | None
+    coords: GeoJsonLocation | None
 
 
 class OfferLocationArea(OfferLocationBase):
     # type: Literal["area"] = "area"
-    coords: GeoJSONLocation
+    coords: GeoJsonLocation
     radius: float
     #
     # @validator("coords")
