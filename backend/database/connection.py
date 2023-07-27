@@ -2,9 +2,9 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from backend.database.models.locations import (
-    LocationDetailedDB,
+    LocationDetailedDb,
     LocationHistory,
-    LocationShortDB,
+    LocationShortDb,
     LocationUpdateReport,
     Review,
 )
@@ -25,8 +25,8 @@ async def init():
     documents = [
         UserPasswordReset,
         UserRelation,
-        LocationDetailedDB,
-        LocationShortDB,
+        LocationDetailedDb,
+        LocationShortDb,
         Review,
         LocationHistory,
         Offer,

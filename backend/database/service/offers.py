@@ -6,9 +6,9 @@ from beanie.odm.operators.find.comparison import Eq, In, NotIn
 from beanie.operators import Near, Not
 
 from backend.database.models.locations import (
-    LocationDetailedDB,
+    LocationDetailedDb,
     LocationShort,
-    LocationShortDB,
+    LocationShortDb,
 )
 from backend.database.models.offers import (
     Offer,
@@ -50,7 +50,7 @@ class OfferService:
 
         location = offer.location
         if isinstance(location, OfferLocationConnected):
-            loc = await LocationShortDB.get(location.id)
+            loc = await LocationShortDb.get(location.id)
             if not loc:
                 raise errors.LocationDoesNotExist()
             location.coords = loc.location
@@ -125,7 +125,7 @@ class OfferService:
     async def get_at_location(
         self, user: User, location_id: PydanticObjectId, date_time: OfferTime
     ) -> list[Offer]:
-        loc = await LocationDetailedDB.get(location_id)
+        loc = await LocationDetailedDb.get(location_id)
         if not loc:
             raise errors.LocationDoesNotExist()
 

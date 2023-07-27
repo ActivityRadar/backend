@@ -26,22 +26,22 @@ class PhotoInfo(BaseModel):
     creation_date: Datetime
 
 
-class GeoJSONLocation(BaseModel):
+class GeoJsonLocation(BaseModel):
     type: str = "Point"
     coordinates: LongLat
 
 
-class GeoJSONLine(BaseModel):
+class GeoJsonLine(BaseModel):
     type: str = "LineString"
     coordinates: list[LongLat]
 
 
-class GeoJSONFeatureCollection(BaseModel):
+class GeoJsonFeatureCollection(BaseModel):
     type: str = "GeometryCollection"
     geometries: list[dict[str, Any]]
 
 
-GeoJSONObject = GeoJSONLocation | GeoJSONLine | GeoJSONFeatureCollection
+GeoJsonObject = GeoJsonLocation | GeoJsonLine | GeoJsonFeatureCollection
 
 
 class UserBase(BaseModel):

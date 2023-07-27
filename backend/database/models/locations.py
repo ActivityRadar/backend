@@ -8,8 +8,8 @@ from pymongo import GEO2D, GEOSPHERE, IndexModel
 
 from backend.database.models.shared import (
     CreationInfo,
-    GeoJSONLocation,
-    GeoJSONObject,
+    GeoJsonLocation,
+    GeoJsonObject,
     PhotoInfo,
 )
 from backend.util.types import Datetime
@@ -29,7 +29,7 @@ class ReviewBase(ReviewInfo):
 
 class LocationBase(BaseModel):
     activity_type: str
-    location: GeoJSONLocation
+    location: GeoJsonLocation
 
 
 class LocationShort(LocationBase):
@@ -41,11 +41,11 @@ class LocationShort(LocationBase):
 class LocationDetailed(LocationShort):
     tags: dict[str, Any]
     recent_reviews: list[ReviewBase]
-    geometry: GeoJSONObject | None
+    geometry: GeoJsonObject | None
     photos: list[PhotoInfo] | None
 
 
-class LocationDetailedDB(Document, LocationDetailed):
+class LocationDetailedDb(Document, LocationDetailed):
     creation: CreationInfo
     last_modified: datetime
     osm_id: int | None = None
@@ -62,7 +62,7 @@ class LocationDetailedDB(Document, LocationDetailed):
         ]
 
 
-class LocationShortDB(Document, LocationShort):
+class LocationShortDb(Document, LocationShort):
     class Settings:
         name = "simple_locations"
         indexes = [
@@ -76,14 +76,14 @@ class LocationNew(LocationBase):
     name: str | None = None
     photos: list[PhotoInfo] = []
     tags: dict[str, Any] = {}
-    geometry: GeoJSONObject | None = None
+    geometry: GeoJsonObject | None = None
 
 
-class LocationShortAPI(LocationBase):
+class LocationShortApi(LocationBase):
     id: PydanticObjectId
 
 
-class LocationDetailedAPI(LocationDetailed):
+class LocationDetailedApi(LocationDetailed):
     ...
 
 
