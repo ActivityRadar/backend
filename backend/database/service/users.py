@@ -14,7 +14,7 @@ from backend.database.models.users import (
     NewUser,
     RelationStatus,
     User,
-    UserIn,
+    UserApiIn,
     UserPasswordReset,
     UserRelation,
 )
@@ -62,7 +62,7 @@ class UserService:
         users = await User.find_many(RegEx(User.username, regex, options="i")).to_list()
         return users
 
-    async def create_user(self, user_info: UserIn) -> NewUser:
+    async def create_user(self, user_info: UserApiIn) -> NewUser:
         u = await self.get_by_username(user_info.username)
         if u:
             raise E.UserWithNameExists()

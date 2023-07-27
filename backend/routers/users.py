@@ -5,9 +5,10 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 import backend.util.errors as E
-from backend.database.models.users import User, UserAPI, UserIn, UserRelation
+from backend.database.models.users import User, UserApiIn, UserApiOut, UserRelation
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
+    LoginForm,
     authenticate_user,
     get_current_user,
     get_user_by_name,
@@ -40,14 +41,12 @@ ApiUser = Annotated[User, Depends(get_current_user)]
 
 
 @me_router.get("/")
-def get_this_user(user: ApiUser) -> UserAPI:
-    return UserAPI(**user.dict())
+def get_this_user(user: ApiUser) -> UserApiOut:
+    return UserApiOut(**user.dict())
 
 
 @me_router.delete("/")
-async def delete_user(
-    user: ApiUser, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-):
+async def delete_user(user: ApiUser, form_data: Annotated[LoginForm, Depends()]):
     await authenticate_user(form_data.username, form_data.password)
     success = await user_service.archive(user)
     if success:
@@ -125,10 +124,10 @@ async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
 
 
 @relation_router.get("/")
-async def get_all_friends(user: ApiUser) -> list[UserAPI]:
+async def get_all_friends(user: ApiUser) -> list[UserApiOut]:
     rs = relation_service.get_all_active_relations(user)
     users = await relation_service.relations_to_users(user, rs)
-    return [UserAPI(**u.dict()) for u in users]
+    return [UserApiOut(**u.dict()) for u in users]
 
 
 @relation_router.get("/open")
@@ -138,7 +137,7 @@ async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
 
 
 @router.post("/")
-async def create_user(user_info: UserIn):
+async def create_user(user_info: UserApiIn):
     # TODO: This should probably be protected with an API key.
     try:
         u = await user_service.create_user(user_info)
@@ -190,9 +189,9 @@ async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends
 
 
 @router.get("/")
-async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserAPI]:
+async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserApiOut]:
     users = await user_service.find_by_name(search)
-    return [UserAPI(**u.dict()) for u in users]
+    return [UserApiOut(**u.dict()) for u in users]
 
 
 @router.post("/report/{user_id}")
