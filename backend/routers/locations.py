@@ -148,7 +148,9 @@ async def get_reviews(
 
 
 @review_router.post("/")
-async def create_review(user: ApiUser, review: ReviewInfo):
+async def create_review(
+    user: ApiUser, location_id: PydanticObjectId, review: ReviewInfo
+):
     # error if location not found
     loc = await location_service.get(review.location_id)
     if not loc:
@@ -162,8 +164,13 @@ async def create_review(user: ApiUser, review: ReviewInfo):
     return review_id
 
 
-@review_router.put("/")
-async def update_review(user: ApiUser, review_id: PydanticObjectId, review: ReviewInfo):
+@review_router.put("/{review_id}")
+async def update_review(
+    user: ApiUser,
+    location_id: PydanticObjectId,
+    review_id: PydanticObjectId,
+    review: ReviewInfo,
+):
     try:
         await review_service.update(user, review_id, review)
     except errors.ReviewDoesNotExist:
@@ -174,8 +181,10 @@ async def update_review(user: ApiUser, review_id: PydanticObjectId, review: Revi
     return {"message": "success"}
 
 
-@review_router.delete("/")
-async def remove_review(user: ApiUser, review_id: PydanticObjectId):
+@review_router.delete("/{review_id}")
+async def remove_review(
+    user: ApiUser, location_id: PydanticObjectId, review_id: PydanticObjectId
+):
     try:
         await review_service.delete(user, review_id)
     except errors.ReviewDoesNotExist:
@@ -186,8 +195,13 @@ async def remove_review(user: ApiUser, review_id: PydanticObjectId):
     return {"message": "success"}
 
 
-@review_router.put("/{review_id}")
-async def report_review(user: ApiUser, review_id: PydanticObjectId, reason: str):
+@review_router.put("/{review_id}/report")
+async def report_review(
+    user: ApiUser,
+    location_id: PydanticObjectId,
+    review_id: PydanticObjectId,
+    reason: str,
+):
     try:
         await review_service.report(user, review_id, reason)
     except errors.UserHasAlreadyReportedThisReview:

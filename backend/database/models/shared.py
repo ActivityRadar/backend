@@ -1,10 +1,12 @@
 from enum import Enum
 from typing import Any
 
-from beanie import Document, PydanticObjectId
+from beanie import PydanticObjectId
 from pydantic import BaseModel
 
-from backend.util.types import Datetime, LongLat
+from backend.util.types import Datetime
+
+LongLat = list[float]
 
 
 class LocationCreators(Enum):
