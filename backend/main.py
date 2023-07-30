@@ -30,20 +30,64 @@ async def startup():
     app.include_router(chats.router)
     # app.include_router(events.router)
 
+    # uncomment to generate a schema on startup. Usually only needed once the code is changed.
+    # save_schema()
+
+
+def cleanup_schema(schema):
+    # These endpoints receive form bodies which are not described nicely by default.
+    # The names look like `Body_unarchive_user_users_reactivate_put`.
+    # As each endpoint gets its own schema, even though they are all the same, coming
+    # from the OAuth2PasswordRequestForm class, we need to merge them for a nicer schema:
+    pw_form_endpoints = [
+        ("/auth/token", "post"),
+        ("/users/reactivate", "put"),
+        ("/users/me/", "delete"),
+    ]
+    new_schema_name = "LoginBody"
+    schema_names = []
+    for path, cmd in pw_form_endpoints:
+        try:
+            d = schema["paths"][path][cmd]["requestBody"]["content"][
+                "application/x-www-form-urlencoded"
+            ]["schema"]
+            r = d["$ref"]
+            schema_name = r.split("/")[-1]
+            if not schema_name.startswith("Body"):
+                continue
+
+            print(schema_name)
+            schema_names.append(schema_name)
+
+            d["$ref"] = f"#/components/schemas/{new_schema_name}"
+        except:
+            print("Maybe some error parsing the schema?")
+
+    if len(schema_names) > 0:
+        d = schema["components"]["schemas"]
+        d[new_schema_name] = d[schema_names[0]]
+        del d[schema_names[0]]
+
+        for name in schema_names[1:]:
+            del d[name]
+
+    return schema
+
+
+def save_schema():
     for route in app.routes:
         if isinstance(route, APIRoute):
-            route: APIRoute = route
             route.operation_id = route.name
 
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        openapi_version=app.openapi_version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    schema = cleanup_schema(schema)
+
     with open("openapi.yaml", "w") as f:
-        yaml.dump(
-            get_openapi(
-                title=app.title,
-                version=app.version,
-                openapi_version=app.openapi_version,
-                description=app.description,
-                routes=app.routes,
-            ),
-            f,
-            sort_keys=False,
-        )
+        yaml.dump(schema, f, sort_keys=False)
