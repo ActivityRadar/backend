@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from beanie import PydanticObjectId
 from dotenv import load_dotenv
-from fastapi import Form, HTTPException
+from fastapi import HTTPException
 from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -26,17 +26,20 @@ class TokenData(BaseModel):
     id: PydanticObjectId
 
 
-class RepeatPasswordForm(BaseModel):
-    new_password: str = Form()
-    new_password_repeated: str = Form()
+class NewPasswordForm(BaseModel):
+    new_password: str
 
 
-class ResetPasswordForm(RepeatPasswordForm):
+class ResetPasswordForm(NewPasswordForm):
     ...
 
 
-class ChangePasswordForm(RepeatPasswordForm):
-    old_password: str = Form()
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+
+class ChangePasswordForm(NewPasswordForm):
+    old_password: str
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")

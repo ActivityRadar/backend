@@ -56,6 +56,10 @@ class UserService:
         u = await User.find_one(User.username == username)
         return u
 
+    async def get_by_email(self, email: str) -> User | None:
+        u = await User.find_one(User.authentication.email == email)
+        return u
+
     async def find_by_name(self, name):
         # TODO: Check if this can be exploited! (like some injection, idk)
         regex = "^" + name  # only search from start of username
@@ -116,20 +120,18 @@ class UserService:
         if form.old_password == form.new_password:
             raise E.UserNewPasswordIsOldPassword()
 
-        await self.reset_password(user, ResetPasswordForm(**form.dict()))
+        await self._set_password(user, form.new_password)
 
     async def reset_password(self, user: User, form: ResetPasswordForm):
-        if form.new_password != form.new_password_repeated:
-            raise E.UserNewPasswordDoesNotMatch()
-
         await self._set_password(user, form.new_password)
 
     async def _set_password(self, user: User, new_password: str):
         user.authentication.password_hash = hash_password(new_password)
         await user.save()
 
-    async def request_reset_password(self, username: str):
-        user = await self.get_by_username(username)
+    async def request_reset_password(self, email: str):
+        # TODO: requires each email address to be used only once!
+        user = await self.get_by_email(email)
         if not user:
             # pretend that everything went alright
             raise E.UserDoesNotExist()
@@ -144,13 +146,13 @@ class UserService:
 
         # TODO: remember the IP address of the issuer to prevent spam requests and unnecessary emails to users
         await UserPasswordReset(
-            username=username, expiry=expiry, token=token, ip_address=None
+            username=user.username, expiry=expiry, token=token, ip_address=None
         ).save()
 
         # TODO: send an email to the email address of the user with a hash that enables
         # the user to use the reset_password option
 
-    async def execute_password_reset(self, token: str, passwords: ResetPasswordForm):
+    async def execute_password_reset(self, token: str, reset_info: ResetPasswordForm):
         # check if the token is valid
         token_info = decode_password_reset_token(token)
 
@@ -165,7 +167,7 @@ class UserService:
             # Except, the user was deleted in the meantime...
             raise E.UserDoesNotExist()
 
-        await self.reset_password(user, passwords)
+        await self.reset_password(user, reset_info)
 
         # delete the reset request after successful reset
         await u.delete()
