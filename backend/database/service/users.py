@@ -208,6 +208,18 @@ class UserService:
         await user.save()
         return user
 
+    async def put_photo(self, user: User, photo_info: PhotoInfo):
+        if user.id != photo_info.user_id:
+            raise Exception("Profile photo does not belong to user!")
+
+        user.avatar = photo_info
+
+        await user.save()
+
+    async def delete_photo(self, user: User):
+        user.avatar = None
+        await user.save()
+
 
 class RelationService:
     async def add_friend(self, from_user: User, to_user: User):
