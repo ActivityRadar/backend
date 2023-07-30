@@ -5,7 +5,7 @@ from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, IPvAnyAddress
 from pymongo import GEOSPHERE, IndexModel
 
-from backend.database.models.shared import GeoJsonLocation, UserBase
+from backend.database.models.shared import GeoJsonLocation, PhotoInfo, UserBase
 from backend.util.types import Datetime
 
 
@@ -24,6 +24,7 @@ class Authentication(BaseModel):
 
 class UserWithoutId(UserBase):
     trust_score: int
+    avatar: PhotoInfo | None
     ip_address: IPvAnyAddress | None = None
     creation_date: Datetime
     last_location: GeoJsonLocation | None = None
@@ -53,6 +54,7 @@ class NewUser(Document, UserWithoutId):
 
 class UserApiOut(UserBase):
     id: PydanticObjectId
+    avatar: PhotoInfo | None
 
 
 class UserApiIn(UserBase):
