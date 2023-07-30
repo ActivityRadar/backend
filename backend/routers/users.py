@@ -90,7 +90,7 @@ async def change_user_password(user: ApiUser, form_data: ChangePasswordForm = Bo
 
 
 @photo_router.post("/")
-async def create_profile_photo(user: ApiUser, photo_url: str = Body()):
+async def create_profile_photo(user: ApiUser, photo_url: str = Body(embed=True)):
     photo_info = PhotoInfo(
         user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
     )
@@ -111,6 +111,15 @@ async def get_profile_photo(user: ApiUser):
 @photo_router.delete("/")
 async def delete_profile_photo(user: ApiUser):
     await user_service.delete_photo(user)
+
+
+@router.put("/{user_id}/report-avatar")
+async def report_profile_photo(reporting_user: ApiUser, user_id: PydanticObjectId):
+    reported = await user_service.get_by_id(user_id)
+    if reported is None:
+        raise HTTPException(400, "User does not exist!")
+
+    await user_service.report_avatar(reporter=reporting_user, reported=reported)
 
 
 @relation_router.post("/{user_id}")
@@ -232,7 +241,9 @@ async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserApiOut
 
 @router.post("/report/{user_id}")
 def report_user(reporting_user: ApiUser, user_id: int):
-    return {"message": "User reported successfully!", "user_id": user_id}
+    # TODO: implement
+    # return {"message": "User reported successfully!", "user_id": user_id}
+    pass
 
 
 router.include_router(relation_router)

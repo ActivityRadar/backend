@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.operators import Box, In, Near, Push
+from beanie.operators import Box, In, Near, Pull, Push
 
 from backend.database.models.locations import (
     LocationDetailed,
@@ -184,18 +184,6 @@ class LocationService:
 
                         tags[t] = change.content[1]
 
-    async def add_photo(
-        self, user: User, location_id: PydanticObjectId, photo: PhotoInfo
-    ):
-        location = await self.get(location_id)
-        if not location:
-            raise errors.LocationDoesNotExist()
-
-        if user.id != photo.user_id:
-            raise Exception("Profile photo does not belong to user!")
-
-        await location.update(Push({LocationDetailedDb.photos: photo}))
-
     async def get_history(self, location_id: PydanticObjectId, offset: int):
         search = LocationHistory.find(LocationHistory.location_id == location_id)
         return await search.sort(-LocationHistory.date).skip(offset).limit(10).to_list()
@@ -216,3 +204,37 @@ class LocationService:
         ).insert()
 
         return r.id
+
+    async def add_photo(
+        self, user: User, location_id: PydanticObjectId, photo: PhotoInfo
+    ):
+        location = await self.get(location_id)
+        if not location:
+            raise errors.LocationDoesNotExist()
+
+        photos_by_user = [p for p in location.photos if p.user_id == user.id]
+
+        if len(photos_by_user) >= 3:
+            raise errors.UserPostedTooManyPhotos()
+
+        if user.id != photo.user_id:
+            raise Exception("Profile photo does not belong to user!")
+
+        if location.photos is None:
+            location.photos = [photo]
+            await location.save()
+        else:
+            await location.update(Push({LocationDetailedDb.photos: photo}))
+
+    async def get_photo_owner(self, location_id: PydanticObjectId, photo_url: str):
+        loc: LocationDetailedDb = await self.get(location_id)
+        photo = [p for p in loc.photos if p.url == photo_url]
+        if len(photo) != 1:
+            raise errors.PhotoDoesNotExist()
+
+        photo = photo[0]
+        return photo.user_id
+
+    async def remove_photo(self, location_id: PydanticObjectId, photo_url: str):
+        loc: LocationDetailedDb = await self.get(location_id)
+        await loc.update(Pull(LocationDetailedDb.photos.url == photo_url))

@@ -125,3 +125,11 @@ class OfferDoesNotExist(Exception):
 
 class UserDoesNotOwnOffer(Exception):
     ...
+
+
+class PhotoDoesNotExist(Exception):
+    ...
+
+
+class UserPostedTooManyPhotos(Exception):
+    ...
