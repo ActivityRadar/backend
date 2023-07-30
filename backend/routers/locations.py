@@ -45,12 +45,14 @@ async def get_locations_around(
     radius: Annotated[float | None, "Distance in km"] = Query(None),
     activities: list[str] | None = Query(None),
     limit: int = Query(default=20, description="Closest n locations to be returned"),
-) -> list[LocationShortApi]:
+) -> list[LocationDetailedApi]:
     center = (long, lat)
     short = await location_service.get_around(
         center=center, radius=radius, activities=activities, limit=limit
     )
-    result: list[LocationShortApi] = [LocationShortApi(**loc.dict()) for loc in short]
+    result: list[LocationDetailedApi] = [
+        LocationDetailedApi(**loc.dict()) for loc in short
+    ]
     return result
 
 

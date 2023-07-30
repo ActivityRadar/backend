@@ -70,24 +70,34 @@ class LocationService:
         activities: list[str] | None,
         radius: float | None,
         limit: int,
-    ) -> list[LocationShortDb]:
+    ) -> list[LocationDetailedDb]:
         if radius and radius < 1 or limit == 0:
             return []
 
         return await self.find_with_filters(
-            Near(LocationShortDb.location, center[0], center[1], max_distance=radius),
+            Near(
+                LocationDetailedDb.location, center[0], center[1], max_distance=radius
+            ),
             activities=activities,
             limit=limit,
+            return_short=False,
         )
 
     async def find_with_filters(
-        self, *filters, activities: list[str] | None, limit: int | None = None
-    ):
+        self,
+        *filters,
+        activities: list[str] | None,
+        limit: int | None = None,
+        return_short=True,
+    ) -> list[LocationDetailedDb] | list[LocationShortDb]:
         filters = list(filters)
         if activities is not None:
             filters.append(self.get_activities_filter(activities))
 
-        return await LocationShortDb.find_many(*filters).limit(limit).to_list()
+        if return_short:
+            return await LocationShortDb.find_many(*filters).limit(limit).to_list()
+
+        return await LocationDetailedDb.find_many(*filters).limit(limit).to_list()
 
     def check_possible_duplicate(
         self, location: LocationDetailed
