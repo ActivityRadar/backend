@@ -83,7 +83,7 @@ class LocationShortApi(LocationBase):
 
 
 class LocationDetailedApi(LocationDetailed):
-    ...
+    id: PydanticObjectId
 
 
 class TagChangeType(str, Enum):
