@@ -30,6 +30,10 @@ class UsernameAlreadyTaken(Exception):
     ...
 
 
+class EmailDoesNotMatchAccount(Exception):
+    ...
+
+
 class TokenInvalid(Exception):
     ...
 
@@ -114,8 +118,10 @@ class TagDoesNotExist(Exception):
 class UserHasTooManyOngoingUpdateReports(Exception):
     ...
 
+
 class OfferDoesNotExist(Exception):
     ...
+
 
 class UserDoesNotOwnOffer(Exception):
     ...

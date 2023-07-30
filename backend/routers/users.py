@@ -8,13 +8,16 @@ import backend.util.errors as E
 from backend.database.models.users import User, UserApiIn, UserApiOut, UserRelation
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
-    LoginForm,
     authenticate_user,
     get_current_user,
     get_user_by_name,
     login,
 )
-from backend.util.crypto import ChangePasswordForm, ResetPasswordForm
+from backend.util.crypto import (
+    ChangePasswordForm,
+    ResetPasswordForm,
+    ResetPasswordRequest,
+)
 
 router = APIRouter(
     prefix="/users",
@@ -46,8 +49,8 @@ def get_this_user(user: ApiUser) -> UserApiOut:
 
 
 @me_router.delete("/")
-async def delete_user(user: ApiUser, form_data: Annotated[LoginForm, Depends()]):
-    await authenticate_user(form_data.username, form_data.password)
+async def delete_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
     success = await user_service.archive(user)
     if success:
         message = "User was archived! Will be deleted in 14 days!"
@@ -70,16 +73,13 @@ async def update_user(user: ApiUser, change_set: Annotated[dict, Body()]):
 
 
 @me_router.put("/change_password")
-async def change_user_password(
-    user: ApiUser, form_data: Annotated[ChangePasswordForm, Depends()]
-):
-    print(form_data)
+async def change_user_password(user: ApiUser, form_data: ChangePasswordForm = Body()):
     try:
         await user_service.change_password(user, form_data)
-    except:
-        raise HTTPException(400, "Something went wrong!")
-
-    print("Pw changed!")
+    except E.UserWrongPassword:
+        raise HTTPException(403, "Wrong old password!")
+    except E.UserNewPasswordIsOldPassword:
+        raise HTTPException(403, "New and old password are same!")
 
 
 @relation_router.post("/{user_id}")
@@ -147,22 +147,27 @@ async def create_user(user_info: UserApiIn):
     return {"id": u.id}
 
 
-@router.get("/reset_password/{username}")
-async def request_reset_password(username: str):
+@router.put("/reset_password")
+async def request_reset_password(request_body: ResetPasswordRequest):
     try:
-        await user_service.request_reset_password(username)
+        await user_service.request_reset_password(request_body.email)
     except E.UserDoesNotExist:
         raise HTTPException(404, "User does not exist!")
     except E.UserHasPendingRequest:
         raise HTTPException(400, "User has pending request!")
+    except E.EmailDoesNotMatchAccount:
+        # Dont do anything, the potential attacker shouldnt know anything...
+        pass
 
-    return {"message": f"A request has been sent to the user's email address!"}
+    return {
+        "message": "If the E-mail address matched a user's, a request has been sent to it!"
+    }
 
 
 @router.put("/reset_password/{token}")
-async def reset_password(token: str, passwords: ResetPasswordForm):
+async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
     try:
-        await user_service.execute_password_reset(token, passwords)
+        await user_service.execute_password_reset(token, reset_info)
     except E.TokenInvalid:
         raise HTTPException(401, "Token outdated or invalid!")
     except E.UserDoesNotExist:
@@ -174,7 +179,7 @@ async def reset_password(token: str, passwords: ResetPasswordForm):
 
 
 @router.put("/reactivate")
-async def unarchive_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def unarchive_user(form_data: OAuth2PasswordRequestForm = Depends()):
     session_token_dict = await login(form_data)
 
     user = await get_user_by_name(form_data.username)
