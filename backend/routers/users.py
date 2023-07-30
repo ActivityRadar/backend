@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 
 from beanie import PydanticObjectId
@@ -5,6 +6,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 import backend.util.errors as E
+from backend.database.models.shared import PhotoInfo
 from backend.database.models.users import User, UserApiIn, UserApiOut, UserRelation
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
@@ -30,6 +32,11 @@ me_router = APIRouter(
     dependencies=[
         Depends(get_current_user)
     ],  # only logged in users can access user data
+)
+
+photo_router = APIRouter(
+    prefix="/photo",
+    tags=["profile_photo"],
 )
 
 relation_router = APIRouter(
@@ -80,6 +87,30 @@ async def change_user_password(user: ApiUser, form_data: ChangePasswordForm = Bo
         raise HTTPException(403, "Wrong old password!")
     except E.UserNewPasswordIsOldPassword:
         raise HTTPException(403, "New and old password are same!")
+
+
+@photo_router.post("/")
+async def create_profile_photo(user: ApiUser, photo_url: str):
+    photo_info = PhotoInfo(
+        user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
+    )
+
+    await user_service.put_photo(user=user, photo_info=photo_info)
+
+
+@photo_router.get("/")
+async def get_profile_photo(user: ApiUser):
+    """
+    This does not have to be implemented, as the user gets the photo info with the
+    GET /users/me request anyways
+    """
+
+    raise NotImplementedError()
+
+
+@photo_router.delete("/")
+async def delete_profile_photo(user: ApiUser):
+    await user_service.delete_photo(user)
 
 
 @relation_router.post("/{user_id}")
@@ -205,4 +236,5 @@ def report_user(reporting_user: ApiUser, user_id: int):
 
 
 router.include_router(relation_router)
+me_router.include_router(photo_router)
 router.include_router(me_router)

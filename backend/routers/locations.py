@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import Annotated
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 
 import backend.util.errors as errors
 from backend.database.models.locations import (
@@ -15,6 +16,7 @@ from backend.database.models.locations import (
     ReviewOut,
     ReviewsPage,
 )
+from backend.database.models.shared import PhotoInfo
 from backend.database.service import location_service, review_service, user_service
 from backend.routers.users import ApiUser
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
@@ -221,4 +223,31 @@ async def set_confirmation(
     raise NotImplementedError()
 
 
+photo_router = APIRouter(prefix="/{location_id}/photos", tags=["photos"])
+
+
+@photo_router.post("/")
+async def add_photo(
+    user: ApiUser, location_id: PydanticObjectId, photo_url: str = Body()
+):
+    photo_info = PhotoInfo(
+        user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
+    )
+
+    await location_service.add_photo(
+        user=user, location_id=location_id, photo=photo_info
+    )
+
+
+@photo_router.delete("/{photo_id}")
+async def remove_photo(user: ApiUser, location_id: PydanticObjectId, photo_id: str):
+    pass
+
+
+@photo_router.put("/{photo_id}/report")
+async def report_photo(user: ApiUser, location_id: PydanticObjectId, photo_id: str):
+    pass
+
+
 router.include_router(review_router)
+router.include_router(photo_router)

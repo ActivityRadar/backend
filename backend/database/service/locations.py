@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.operators import Box, In, Near
+from beanie.operators import Box, In, Near, Push
 
 from backend.database.models.locations import (
     LocationDetailed,
@@ -135,7 +135,7 @@ class LocationService:
 
         # Update the short version
         await LocationShortDb(**loc.dict()).save()
-        # loc_short = await LocationShortDB.get(location_id)
+        # loc_short = await LocationShortDb.get(location_id)
 
         # TODO: add location history entry
         await history.save()
@@ -187,7 +187,14 @@ class LocationService:
     async def add_photo(
         self, user: User, location_id: PydanticObjectId, photo: PhotoInfo
     ):
-        raise NotImplementedError()
+        location = await self.get(location_id)
+        if not location:
+            raise errors.LocationDoesNotExist()
+
+        if user.id != photo.user_id:
+            raise Exception("Profile photo does not belong to user!")
+
+        await location.update(Push({LocationDetailedDb.photos: photo}))
 
     async def get_history(self, location_id: PydanticObjectId, offset: int):
         search = LocationHistory.find(LocationHistory.location_id == location_id)
