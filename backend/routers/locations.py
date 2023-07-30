@@ -84,7 +84,7 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(
-        **info.dict(), recent_reviews=[], trust_score=trust_score
+        **info.dict(), recent_reviews=[], trust_score=trust_score, photos=[]
     )
     new_id = await location_service.insert(detailed, adding_user.id)
     return {"id": new_id}

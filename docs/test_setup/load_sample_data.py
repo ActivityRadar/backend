@@ -105,6 +105,7 @@ def osm_to_mongo(loc):
         "trust_score": 1000,
         "recent_reviews": [],
         "last_modified": datetime.strptime(loc.timestamp, constants.DATE_FMT),
+        "photos": [],
     }
     if loc.tags.name is not None:
         d |= {"name": loc.tags.name}

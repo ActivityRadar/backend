@@ -42,7 +42,7 @@ class LocationDetailed(LocationShort):
     tags: dict[str, Any]
     recent_reviews: list[ReviewBase]
     geometry: GeoJsonObject | None
-    photos: list[PhotoInfo] | None
+    photos: list[PhotoInfo]
 
 
 class LocationDetailedDb(Document, LocationDetailed):
@@ -74,7 +74,6 @@ class LocationShortDb(Document, LocationShort):
 
 class LocationNew(LocationBase):
     name: str | None = None
-    photos: list[PhotoInfo] = []
     tags: dict[str, Any] = {}
     geometry: GeoJsonObject | None = None
 
