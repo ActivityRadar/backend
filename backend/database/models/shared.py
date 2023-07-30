@@ -47,4 +47,3 @@ GeoJsonObject = GeoJsonLocation | GeoJsonLine | GeoJsonFeatureCollection
 class UserBase(BaseModel):
     username: str
     display_name: str
-    avatar: PhotoInfo | None
