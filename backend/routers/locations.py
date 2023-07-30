@@ -228,24 +228,33 @@ photo_router = APIRouter(prefix="/{location_id}/photos", tags=["photos"])
 
 @photo_router.post("/")
 async def add_photo(
-    user: ApiUser, location_id: PydanticObjectId, photo_url: str = Body()
+    user: ApiUser, location_id: PydanticObjectId, photo_url: str = Body(embed=True)
 ):
     photo_info = PhotoInfo(
         user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
     )
 
-    await location_service.add_photo(
-        user=user, location_id=location_id, photo=photo_info
-    )
+    try:
+        await location_service.add_photo(
+            user=user, location_id=location_id, photo=photo_info
+        )
+    except errors.UserPostedTooManyPhotos:
+        raise HTTPException(405, "Cant post more photo for this location!")
 
 
 @photo_router.delete("/{photo_id}")
-async def remove_photo(user: ApiUser, location_id: PydanticObjectId, photo_id: str):
-    pass
+async def remove_photo(user: ApiUser, location_id: PydanticObjectId, photo_url: str):
+    owner = await location_service.get_photo_owner(location_id, photo_url)
+
+    if user.id != owner:
+        raise HTTPException(405, "User does not own photo!")
+
+    await location_service.remove_photo(location_id, photo_url)
 
 
 @photo_router.put("/{photo_id}/report")
 async def report_photo(user: ApiUser, location_id: PydanticObjectId, photo_id: str):
+    # TODO: implement
     pass
 
 

@@ -220,6 +220,9 @@ class UserService:
         user.avatar = None
         await user.save()
 
+    async def report_avatar(self, reporter: User, reported: User):
+        pass
+
 
 class RelationService:
     async def add_friend(self, from_user: User, to_user: User):
