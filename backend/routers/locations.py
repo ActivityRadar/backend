@@ -17,7 +17,7 @@ from backend.database.models.locations import (
     ReviewsPage,
     ReviewsSummary,
 )
-from backend.database.models.shared import PhotoInfo
+from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.service import location_service, review_service, user_service
 from backend.routers.users import ApiUser
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
@@ -231,11 +231,9 @@ photo_router = APIRouter(prefix="/{location_id}/photos", tags=["photos"])
 
 
 @photo_router.post("/")
-async def add_photo(
-    user: ApiUser, location_id: PydanticObjectId, photo_url: str = Body(embed=True)
-):
+async def add_photo(user: ApiUser, location_id: PydanticObjectId, photo_url: PhotoUrl):
     photo_info = PhotoInfo(
-        user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
+        user_id=user.id, url=photo_url.url, creation_date=datetime.utcnow()
     )
 
     try:

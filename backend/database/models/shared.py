@@ -26,6 +26,10 @@ class PhotoInfo(BaseModel):
     creation_date: Datetime
 
 
+class PhotoUrl(BaseModel):
+    url: str
+
+
 class GeoJsonLocation(BaseModel):
     type: str = "Point"
     coordinates: LongLat

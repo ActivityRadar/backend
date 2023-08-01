@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 import backend.util.errors as E
-from backend.database.models.shared import PhotoInfo
+from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.models.users import User, UserApiIn, UserApiOut, UserRelation
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
@@ -90,9 +90,9 @@ async def change_user_password(user: ApiUser, form_data: ChangePasswordForm = Bo
 
 
 @photo_router.post("/")
-async def create_profile_photo(user: ApiUser, photo_url: str = Body(embed=True)):
+async def create_profile_photo(user: ApiUser, photo_url: PhotoUrl):
     photo_info = PhotoInfo(
-        user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
+        user_id=user.id, url=photo_url.url, creation_date=datetime.utcnow()
     )
 
     await user_service.put_photo(user=user, photo_info=photo_info)
