@@ -12,6 +12,7 @@ from backend.database.models.locations import (
     LocationShortDb,
     LocationUpdateReport,
     Review,
+    ReviewWithId,
     TagChangeType,
 )
 from backend.database.models.shared import CreationInfo, LocationCreators, PhotoInfo
@@ -253,7 +254,12 @@ class LocationService:
         print(len(loc.reviews.recent))
         await loc.update(
             Push(
-                {LocationDetailedDb.reviews.recent: {"$position": 0, "$each": [review]}}
+                {
+                    LocationDetailedDb.reviews.recent: {
+                        "$position": 0,
+                        "$each": [ReviewWithId(**review.dict())],
+                    }
+                }
             )
         )  # push first
         if len(loc.reviews.recent) == MAX_RECENT_REVIEWS:
@@ -294,9 +300,8 @@ class LocationService:
 
         # remove from recent list if present
         if review in loc.reviews.recent:
-            print("is in recent")
             loc = await loc.update(
-                Pull({LocationDetailedDb.reviews.recent: Eq("_id", review.id)})
+                Pull({LocationDetailedDb.reviews.recent: Eq("id", review.id)})
             )
             # TODO: in this case add another recent Review to the list
 
@@ -316,11 +321,13 @@ class LocationService:
 
         loc.reviews.average_rating = new_avg
 
+        new_review = ReviewWithId(**updated_review.dict())
+
         # check if the updated review was in the recent list
         try:
             r_ids = [r.id for r in loc.reviews.recent]
-            idx = r_ids.index(updated_review.id)
-            loc.reviews.recent[idx] = updated_review
+            idx = r_ids.index(new_review.id)
+            loc.reviews.recent[idx] = new_review
         except ValueError:
             # If there is a ValueError, we ignore it, as it is expected
             pass

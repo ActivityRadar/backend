@@ -12,7 +12,6 @@ from backend.database.models.shared import (
     GeoJsonObject,
     PhotoInfo,
 )
-from backend.database.models.users import UserApiOut
 from backend.util.types import Datetime
 
 
@@ -33,6 +32,10 @@ class ReviewInfo(ReviewBase):
     user_id: PydanticObjectId
 
 
+class ReviewWithId(ReviewInfo):
+    id: PydanticObjectId
+
+
 class Review(ReviewInfo, Document):
     class Settings:
         name = "reviews"
@@ -41,7 +44,7 @@ class Review(ReviewInfo, Document):
 class ReviewsSummary(BaseModel):
     average_rating: float
     count: int
-    recent: list[Review]
+    recent: list[ReviewWithId]
 
 
 class LocationBase(BaseModel):
@@ -132,13 +135,9 @@ class LocationHistory(LocationHistoryIn, Document):
         name = "location_change_history"
 
 
-class ReviewOut(Review):
-    id: PydanticObjectId
-
-
 class ReviewsPage(BaseModel):
     next_offset: int | None
-    reviews: list[ReviewOut]
+    reviews: list[ReviewWithId]
 
 
 class ReviewReport(Document):

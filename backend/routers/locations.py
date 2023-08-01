@@ -13,9 +13,9 @@ from backend.database.models.locations import (
     LocationShortApi,
     LocationShortDb,
     ReviewBase,
-    ReviewOut,
     ReviewsPage,
     ReviewsSummary,
+    ReviewWithId,
 )
 from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.service import location_service, review_service, user_service
@@ -150,7 +150,7 @@ async def get_reviews(
 
     reviews, new_offset = await review_service.get_page(location_id, offset, n)
 
-    reviews = [ReviewOut(**r.dict()) for r in reviews]
+    reviews = [ReviewWithId(**r.dict()) for r in reviews]
 
     return ReviewsPage(reviews=reviews, next_offset=new_offset)
 
