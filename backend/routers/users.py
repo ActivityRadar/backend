@@ -187,6 +187,15 @@ async def create_user(user_info: UserApiIn):
     return {"id": u.id}
 
 
+@router.get("/{user_id}")
+async def get_user_info(user_id: PydanticObjectId):
+    u = await user_service.get_by_id(user_id)
+    if not u:
+        raise HTTPException(404, "User not found!")
+
+    return UserApiOut(**u.dict())
+
+
 @router.put("/reset_password")
 async def request_reset_password(request_body: ResetPasswordRequest):
     try:
