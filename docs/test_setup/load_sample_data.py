@@ -17,6 +17,7 @@ from backend.database.models.locations import (
     LocationDetailed,
     LocationDetailedDb,
     LocationShortDb,
+    ReviewsSummary,
 )
 from backend.database.models.shared import LocationCreators
 from backend.database.service import location_service
@@ -103,7 +104,7 @@ def osm_to_mongo(loc):
         "osm_id": loc.id,
         "tags": {k: v for k, v in loc.tags.items() if k != "sport"},
         "trust_score": 1000,
-        "recent_reviews": [],
+        "reviews": ReviewsSummary(average_rating=0, count=0, recent=[]),
         "last_modified": datetime.strptime(loc.timestamp, constants.DATE_FMT),
         "photos": [],
     }
@@ -114,15 +115,6 @@ def osm_to_mongo(loc):
     else:
         d |= {"geometry": None}
     return d
-
-
-async def insert_all(elements):
-    es = [osm_to_mongo(e) for e in elements]
-    detailed = [LocationDetailedDb(**e) for e in es]
-    ds = await LocationDetailedDb.insert_many(detailed)
-
-    short = [LocationShortDb(**e, id=d) for (e, d) in zip(es, ds.inserted_ids)]
-    await LocationShortDb.insert_many(short)
 
 
 async def insert_all_service(elements):

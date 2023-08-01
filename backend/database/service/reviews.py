@@ -2,12 +2,15 @@ from datetime import datetime
 
 from beanie import PydanticObjectId
 
-from backend.database.models.locations import Review, ReviewInfo, ReviewReport
+from backend.database.models.locations import Review, ReviewBase, ReviewReport
 from backend.database.models.users import User
+from backend.database.service.locations import LocationService
 from backend.util import errors
 
 
 class ReviewService:
+    location_service = LocationService()
+
     async def get(self, id: PydanticObjectId):
         return await Review.get(id)
 
@@ -22,13 +25,13 @@ class ReviewService:
             return rs, None
         return rs, offset + size
 
-    def validate(self, review_info: ReviewInfo):
+    def validate(self, review_info: ReviewBase):
         # TODO: implement this!
         # - text is valid and not too long
         # - details fit the location type
         pass
 
-    async def create(self, user: User, review_info: ReviewInfo):
+    async def create(self, user: User, review_info: ReviewBase):
         u = await Review.find_one(
             Review.user_id == user.id and Review.location_id == review_info.location_id
         )
@@ -43,19 +46,11 @@ class ReviewService:
             user_id=user.id, creation_date=datetime.utcnow(), **review_info.dict()
         ).insert()
 
-        # TODO: at some point, we need to update the average score of the location
-        # but this solution will be a bit expensive in the long run...
-        # avg = await self.get_average_rating(review_info.location_id)
-        # await location_service.set_average_rating(review_info.location_id, avg)
+        await self.location_service.add_review(review_info.location_id, review)
 
         return review.id
 
-    async def get_average_rating(self, location_id: PydanticObjectId):
-        return await Review.find(Review.location_id == location_id).avg(
-            Review.overall_rating
-        )
-
-    async def update(self, user: User, review_id: PydanticObjectId, review: ReviewInfo):
+    async def update(self, user: User, review_id: PydanticObjectId, review: ReviewBase):
         r = await Review.get(review_id)
         if not r:
             raise errors.ReviewDoesNotExist()
@@ -63,6 +58,7 @@ class ReviewService:
         if r.user_id != user.id:
             raise errors.UserDoesNotOwnReview()
 
+        old_rating = r.overall_rating
         # TODO: validate new review info
         self.validate(review)
 
@@ -72,6 +68,10 @@ class ReviewService:
 
         r.creation_date = datetime.utcnow()
         await r.save()
+
+        await self.location_service.update_review(
+            r.location_id, r, old_rating=old_rating
+        )
 
     async def confirm_location(
         self, user: User, location_id: PydanticObjectId, confirm: bool
@@ -89,6 +89,8 @@ class ReviewService:
             raise errors.UserDoesNotOwnReview()
 
         await r.delete()
+
+        await self.location_service.remove_review(r.location_id, r)
 
     async def report(self, user: User, review_id: PydanticObjectId, reason: str):
         report = ReviewReport.find_one(

@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.operators import Box, In, Near, Pull, Push
+from beanie.odm.operators.find.comparison import Eq
+from beanie.operators import Box, In, Near, Pop, Pull, Push
 
 from backend.database.models.locations import (
     LocationDetailed,
@@ -10,6 +11,7 @@ from backend.database.models.locations import (
     LocationHistoryIn,
     LocationShortDb,
     LocationUpdateReport,
+    Review,
     TagChangeType,
 )
 from backend.database.models.shared import CreationInfo, LocationCreators, PhotoInfo
@@ -18,6 +20,7 @@ from backend.util import errors
 from backend.util.types import BoundingBox, LongLat
 
 MAX_ONGOING_UPDATE_REPORTS = 10
+MAX_RECENT_REVIEWS = 5
 
 
 class LocationService:
@@ -31,7 +34,9 @@ class LocationService:
 
     async def _insert(self, location: LocationDetailedDb):
         loc = await location.insert()
-        await LocationShortDb(**loc.dict()).insert()
+        await LocationShortDb(
+            **loc.dict(), average_rating=loc.reviews.average_rating
+        ).insert()
         return loc
 
     async def insert(
@@ -51,6 +56,9 @@ class LocationService:
 
     async def get(self, id: PydanticObjectId) -> LocationDetailedDb | None:
         return await LocationDetailedDb.get(id)
+
+    async def get_short(self, id: PydanticObjectId) -> LocationShortDb | None:
+        return await LocationShortDb.get(id)
 
     async def get_bbox_short(
         self, bbox: BoundingBox, activities: list[str] | None
@@ -103,18 +111,6 @@ class LocationService:
         self, location: LocationDetailed
     ) -> None | list[LocationDetailed]:
         return None
-
-    async def set_average_rating(
-        self, location_id: PydanticObjectId, average: float | None
-    ):
-        loc = await self.get(location_id)
-        if not loc:
-            raise errors.LocationDoesNotExist()
-
-        loc.average_rating = average
-        await loc.save()
-
-        return loc.average_rating
 
     async def update(self, user: User, history: LocationHistoryIn):
         # TODO: Acquire a write lock, so between reading the location data
@@ -238,3 +234,95 @@ class LocationService:
     async def remove_photo(self, location_id: PydanticObjectId, photo_url: str):
         loc: LocationDetailedDb = await self.get(location_id)
         await loc.update(Pull(LocationDetailedDb.photos.url == photo_url))
+
+    async def add_review(self, location_id: PydanticObjectId, review: Review):
+        loc = await self.get(location_id)
+        if not loc:
+            raise errors.LocationDoesNotExist()
+
+        former_avg = loc.reviews.average_rating
+        cnt = loc.reviews.count
+
+        # TODO: is this accurate? Floating point inaccuracies might be a problem
+        new_avg = (former_avg * cnt + review.overall_rating) / (cnt + 1)
+
+        loc.reviews.average_rating = new_avg
+        loc.reviews.count += 1
+        loc = await loc.save()
+
+        print(len(loc.reviews.recent))
+        await loc.update(
+            Push(
+                {LocationDetailedDb.reviews.recent: {"$position": 0, "$each": [review]}}
+            )
+        )  # push first
+        if len(loc.reviews.recent) == MAX_RECENT_REVIEWS:
+            loc = await loc.update(
+                Pop({LocationDetailedDb.reviews.recent: 1})
+            )  # pop last
+        print(len(loc.reviews.recent))
+
+        loc_short = await self.get_short(location_id)
+        if not loc_short:
+            raise errors.LocationDoesNotExist()
+
+        loc_short.average_rating = new_avg
+
+    async def remove_review(self, location_id: PydanticObjectId, review: Review):
+        loc = await self.get(location_id)
+        if not loc:
+            raise errors.LocationDoesNotExist()
+
+        # adjust count and average
+        former_avg = loc.reviews.average_rating
+        cnt = loc.reviews.count
+
+        if cnt == 1:
+            new_avg = 0
+            loc.reviews.count = 0
+        else:
+            new_avg = (former_avg * cnt - review.overall_rating) / (cnt - 1)
+            loc.reviews.count -= 1
+
+        loc.reviews.average_rating = new_avg
+        loc = await loc.save()
+
+        # update short version
+        loc_short = await self.get_short(location_id)
+        if not loc_short:
+            raise errors.LocationDoesNotExist()
+
+        # remove from recent list if present
+        if review in loc.reviews.recent:
+            print("is in recent")
+            loc = await loc.update(
+                Pull({LocationDetailedDb.reviews.recent: Eq("_id", review.id)})
+            )
+            # TODO: in this case add another recent Review to the list
+
+    async def update_review(
+        self, location_id: PydanticObjectId, updated_review: Review, old_rating: float
+    ):
+        loc = await self.get(location_id)
+        if not loc:
+            raise errors.LocationDoesNotExist()
+
+        # adjust count and average
+        former_avg = loc.reviews.average_rating
+        cnt = loc.reviews.count
+
+        # add new rating and substract old rating from former average
+        new_avg = (former_avg * cnt + updated_review.overall_rating - old_rating) / cnt
+
+        loc.reviews.average_rating = new_avg
+
+        # check if the updated review was in the recent list
+        try:
+            r_ids = [r.id for r in loc.reviews.recent]
+            idx = r_ids.index(updated_review.id)
+            loc.reviews.recent[idx] = updated_review
+        except ValueError:
+            # If there is a ValueError, we ignore it, as it is expected
+            pass
+        finally:
+            await loc.save()

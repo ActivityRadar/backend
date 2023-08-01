@@ -12,9 +12,10 @@ from backend.database.models.locations import (
     LocationNew,
     LocationShortApi,
     LocationShortDb,
-    ReviewInfo,
+    ReviewBase,
     ReviewOut,
     ReviewsPage,
+    ReviewsSummary,
 )
 from backend.database.models.shared import PhotoInfo
 from backend.database.service import location_service, review_service, user_service
@@ -88,7 +89,10 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(
-        **info.dict(), recent_reviews=[], trust_score=trust_score, photos=[]
+        **info.dict(),
+        reviews=ReviewsSummary(count=0, average_rating=0, recent=[]),
+        trust_score=trust_score,
+        photos=[],
     )
     new_id = await location_service.insert(detailed, adding_user.id)
     return {"id": new_id}
@@ -153,10 +157,10 @@ async def get_reviews(
 
 @review_router.post("/")
 async def create_review(
-    user: ApiUser, location_id: PydanticObjectId, review: ReviewInfo
+    user: ApiUser, location_id: PydanticObjectId, review: ReviewBase
 ):
     # error if location not found
-    loc = await location_service.get(review.location_id)
+    loc = await location_service.get(location_id)
     if not loc:
         raise HTTPException(404, "Location not found!")
 
@@ -173,7 +177,7 @@ async def update_review(
     user: ApiUser,
     location_id: PydanticObjectId,
     review_id: PydanticObjectId,
-    review: ReviewInfo,
+    review: ReviewBase,
 ):
     try:
         await review_service.update(user, review_id, review)
