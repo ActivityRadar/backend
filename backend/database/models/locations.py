@@ -15,34 +15,54 @@ from backend.database.models.shared import (
 from backend.util.types import Datetime
 
 
-class ReviewInfo(BaseModel):
+class ReviewBase(BaseModel):
     location_id: PydanticObjectId
+    title: str
     text: str  # TODO limit in length
     overall_rating: float
     details: dict[str, Any]
 
 
-class ReviewBase(ReviewInfo):
+class ReviewApiIn(ReviewBase):
+    ...
+
+
+class ReviewInfo(ReviewBase):
     creation_date: Datetime
     user_id: PydanticObjectId
+
+
+class ReviewWithId(ReviewInfo):
+    id: PydanticObjectId
+
+
+class Review(ReviewInfo, Document):
+    class Settings:
+        name = "reviews"
+
+
+class ReviewsSummary(BaseModel):
+    average_rating: float
+    count: int
+    recent: list[ReviewWithId]
 
 
 class LocationBase(BaseModel):
     activity_type: str
     location: GeoJsonLocation
+    name: str | None
+    trust_score: int
 
 
 class LocationShort(LocationBase):
-    name: str | None
-    trust_score: int
-    average_rating: float | None
+    average_rating: float
 
 
-class LocationDetailed(LocationShort):
+class LocationDetailed(LocationBase):
     tags: dict[str, Any]
-    recent_reviews: list[ReviewBase]
     geometry: GeoJsonObject | None
     photos: list[PhotoInfo]
+    reviews: ReviewsSummary
 
 
 class LocationDetailedDb(Document, LocationDetailed):
@@ -115,22 +135,9 @@ class LocationHistory(LocationHistoryIn, Document):
         name = "location_change_history"
 
 
-class Review(ReviewBase, Document):
-    class Settings:
-        name = "reviews"
-
-
-class ReviewIn(ReviewInfo):
-    ...
-
-
-class ReviewOut(Review):
-    id: PydanticObjectId
-
-
 class ReviewsPage(BaseModel):
     next_offset: int | None
-    reviews: list[ReviewOut]
+    reviews: list[ReviewWithId]
 
 
 class ReviewReport(Document):

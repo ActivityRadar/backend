@@ -12,11 +12,12 @@ from backend.database.models.locations import (
     LocationNew,
     LocationShortApi,
     LocationShortDb,
-    ReviewInfo,
-    ReviewOut,
+    ReviewBase,
     ReviewsPage,
+    ReviewsSummary,
+    ReviewWithId,
 )
-from backend.database.models.shared import PhotoInfo
+from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.service import location_service, review_service, user_service
 from backend.routers.users import ApiUser
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
@@ -88,7 +89,10 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
         raise HTTPException(403, "User not trusted enough!")
 
     detailed = LocationDetailed(
-        **info.dict(), recent_reviews=[], trust_score=trust_score, photos=[]
+        **info.dict(),
+        reviews=ReviewsSummary(count=0, average_rating=0, recent=[]),
+        trust_score=trust_score,
+        photos=[],
     )
     new_id = await location_service.insert(detailed, adding_user.id)
     return {"id": new_id}
@@ -146,17 +150,17 @@ async def get_reviews(
 
     reviews, new_offset = await review_service.get_page(location_id, offset, n)
 
-    reviews = [ReviewOut(**r.dict()) for r in reviews]
+    reviews = [ReviewWithId(**r.dict()) for r in reviews]
 
     return ReviewsPage(reviews=reviews, next_offset=new_offset)
 
 
 @review_router.post("/")
 async def create_review(
-    user: ApiUser, location_id: PydanticObjectId, review: ReviewInfo
+    user: ApiUser, location_id: PydanticObjectId, review: ReviewBase
 ):
     # error if location not found
-    loc = await location_service.get(review.location_id)
+    loc = await location_service.get(location_id)
     if not loc:
         raise HTTPException(404, "Location not found!")
 
@@ -173,7 +177,7 @@ async def update_review(
     user: ApiUser,
     location_id: PydanticObjectId,
     review_id: PydanticObjectId,
-    review: ReviewInfo,
+    review: ReviewBase,
 ):
     try:
         await review_service.update(user, review_id, review)
@@ -227,11 +231,9 @@ photo_router = APIRouter(prefix="/{location_id}/photos", tags=["photos"])
 
 
 @photo_router.post("/")
-async def add_photo(
-    user: ApiUser, location_id: PydanticObjectId, photo_url: str = Body(embed=True)
-):
+async def add_photo(user: ApiUser, location_id: PydanticObjectId, photo_url: PhotoUrl):
     photo_info = PhotoInfo(
-        user_id=user.id, url=photo_url, creation_date=datetime.utcnow()
+        user_id=user.id, url=photo_url.url, creation_date=datetime.utcnow()
     )
 
     try:
