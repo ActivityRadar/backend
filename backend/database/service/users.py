@@ -52,6 +52,9 @@ class UserService:
     def get_by_id(self, id: PydanticObjectId):
         return User.get(id)
 
+    async def get_bulk_by_id(self, ids: list[PydanticObjectId]) -> list[User]:
+        return await User.find_many(In(User.id, ids)).to_list()
+
     async def get_by_username(self, username: str) -> User | None:
         u = await User.find_one(User.username == username)
         return u
