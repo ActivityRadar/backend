@@ -33,7 +33,8 @@ class ReviewService:
 
     async def create(self, user: User, review_info: ReviewBase):
         u = await Review.find_one(
-            Review.user_id == user.id and Review.location_id == review_info.location_id
+            Review.user_id == user.id,
+            Review.location_id == review_info.location_id,
         )
 
         # error if user has review for location already
@@ -94,7 +95,7 @@ class ReviewService:
 
     async def report(self, user: User, review_id: PydanticObjectId, reason: str):
         report = ReviewReport.find_one(
-            ReviewReport.user_id == user.id and ReviewReport.review_id == review_id
+            ReviewReport.user_id == user.id, ReviewReport.review_id == review_id
         )
 
         if report:
