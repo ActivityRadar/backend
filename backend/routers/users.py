@@ -187,13 +187,23 @@ async def create_user(user_info: UserApiIn):
     return {"id": u.id}
 
 
-@router.get("/{user_id}")
-async def get_user_info(user_id: PydanticObjectId):
-    u = await user_service.get_by_id(user_id)
-    if not u:
-        raise HTTPException(404, "User not found!")
+@router.get("/id")
+async def get_user_infos(
+    ids: list[PydanticObjectId] = Query(alias="q"),
+) -> list[UserApiOut]:
+    ids = list(set(ids))
+    match len(ids):
+        case 0:
+            return []
+        case 1:
+            u = await user_service.get_by_id(ids[0])
+            if not u:
+                raise HTTPException(404, "User not found!")
 
-    return UserApiOut(**u.dict())
+            return [UserApiOut(**u.dict())]
+        case _:
+            us = await user_service.get_bulk_by_id(ids)
+            return [UserApiOut(**u.dict()) for u in us]
 
 
 @router.put("/reset_password")
