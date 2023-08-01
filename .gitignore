@@ -1,3 +1,6 @@
+# Manual additions
+.cache_ggshield
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
