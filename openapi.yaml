@@ -1996,69 +1996,6 @@ components:
       required:
       - email
       title: ResetPasswordRequest
-    Review:
-      properties:
-        _id:
-          type: string
-          title: ' Id'
-          examples:
-          - 5eb7cf5a86d9755df3a6c593
-          - 5eb7cfb05e32e07750a1756a
-        location_id:
-          type: string
-          title: Location Id
-          examples:
-          - 5eb7cf5a86d9755df3a6c593
-          - 5eb7cfb05e32e07750a1756a
-        title:
-          type: string
-          title: Title
-        text:
-          type: string
-          title: Text
-        overall_rating:
-          type: number
-          title: Overall Rating
-        details:
-          type: object
-          title: Details
-        creation_date:
-          type: string
-          format: date-time
-          title: Creation Date
-        user_id:
-          type: string
-          title: User Id
-          examples:
-          - 5eb7cf5a86d9755df3a6c593
-          - 5eb7cfb05e32e07750a1756a
-      type: object
-      required:
-      - location_id
-      - title
-      - text
-      - overall_rating
-      - details
-      - creation_date
-      - user_id
-      title: Review
-      description: 'Document Mapping class.
-
-
-        Fields:
-
-
-        - `id` - MongoDB document ObjectID "_id" field.
-
-        Mapped to the PydanticObjectId class
-
-
-        Inherited from:
-
-
-        - Pydantic BaseModel
-
-        - [UpdateMethods](https://roman-right.github.io/beanie/api/interfaces/#aggregatemethods)'
     ReviewBase:
       properties:
         location_id:
@@ -2087,14 +2024,8 @@ components:
       - overall_rating
       - details
       title: ReviewBase
-    ReviewOut:
+    ReviewWithId:
       properties:
-        _id:
-          type: string
-          title: ' Id'
-          examples:
-          - 5eb7cf5a86d9755df3a6c593
-          - 5eb7cfb05e32e07750a1756a
         location_id:
           type: string
           title: Location Id
@@ -2123,9 +2054,14 @@ components:
           examples:
           - 5eb7cf5a86d9755df3a6c593
           - 5eb7cfb05e32e07750a1756a
+        id:
+          type: string
+          title: Id
+          examples:
+          - 5eb7cf5a86d9755df3a6c593
+          - 5eb7cfb05e32e07750a1756a
       type: object
       required:
-      - _id
       - location_id
       - title
       - text
@@ -2133,24 +2069,8 @@ components:
       - details
       - creation_date
       - user_id
-      title: ReviewOut
-      description: 'Document Mapping class.
-
-
-        Fields:
-
-
-        - `id` - MongoDB document ObjectID "_id" field.
-
-        Mapped to the PydanticObjectId class
-
-
-        Inherited from:
-
-
-        - Pydantic BaseModel
-
-        - [UpdateMethods](https://roman-right.github.io/beanie/api/interfaces/#aggregatemethods)'
+      - id
+      title: ReviewWithId
     ReviewsPage:
       properties:
         next_offset:
@@ -2158,7 +2078,7 @@ components:
           title: Next Offset
         reviews:
           items:
-            $ref: '#/components/schemas/ReviewOut'
+            $ref: '#/components/schemas/ReviewWithId'
           type: array
           title: Reviews
       type: object
@@ -2175,7 +2095,7 @@ components:
           title: Count
         recent:
           items:
-            $ref: '#/components/schemas/Review'
+            $ref: '#/components/schemas/ReviewWithId'
           type: array
           title: Recent
       type: object
