@@ -51,8 +51,8 @@ ApiUser = Annotated[User, Depends(get_current_user)]
 
 
 @me_router.get("/")
-def get_this_user(user: ApiUser) -> UserApiOut:
-    return UserApiOut(**user.dict())
+def get_this_user(user: ApiUser) -> User:
+    return user
 
 
 @me_router.delete("/")
