@@ -62,6 +62,10 @@ class UserApiIn(UserBase):
     password: str
 
 
+class UserDetailed(UserWithoutId):
+    id: PydanticObjectId
+
+
 class UserPasswordReset(Document):
     username: str
     expiry: Datetime
