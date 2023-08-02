@@ -7,7 +7,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo, PhotoUrl
-from backend.database.models.users import User, UserApiIn, UserApiOut, UserRelation
+from backend.database.models.users import (
+    User,
+    UserApiIn,
+    UserApiOut,
+    UserDetailed,
+    UserRelation,
+)
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
     authenticate_user,
@@ -51,8 +57,8 @@ ApiUser = Annotated[User, Depends(get_current_user)]
 
 
 @me_router.get("/")
-def get_this_user(user: ApiUser) -> User:
-    return user
+def get_this_user(user: ApiUser) -> UserDetailed:
+    return UserDetailed(**user.dict())
 
 
 @me_router.delete("/")
