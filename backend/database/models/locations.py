@@ -36,7 +36,7 @@ class ReviewWithId(ReviewInfo):
     id: PydanticObjectId
 
 
-class Review(ReviewInfo, Document):
+class Review(Document, ReviewInfo):
     class Settings:
         name = "reviews"
 
@@ -127,7 +127,7 @@ class LocationHistoryIn(BaseModel):
     tags: dict[str, TagChange] | None
 
 
-class LocationHistory(LocationHistoryIn, Document):
+class LocationHistory(Document, LocationHistoryIn):
     user_id: PydanticObjectId
     date: Datetime
 

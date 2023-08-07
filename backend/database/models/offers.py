@@ -132,7 +132,7 @@ class OfferCreatorInfo(UserBase):
     id: PydanticObjectId
 
 
-class Offer(OfferBase, Document):
+class Offer(Document, OfferBase):
     user_info: OfferCreatorInfo
     creation_date: Datetime
     visibility: OfferVisibility
