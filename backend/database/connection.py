@@ -36,6 +36,8 @@ async def init():
 
     for d in documents:
         print(f"init {d}")
-        await init_beanie(database=client.AR, document_models=[d])
+        await init_beanie(database=client[constants.DATABASE_NAME], document_models=[d])
 
-    await init_beanie(database=client.AR, document_models=[NewUser, User])
+    await init_beanie(
+        database=client[constants.DATABASE_NAME], document_models=[NewUser, User]
+    )

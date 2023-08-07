@@ -23,13 +23,16 @@ from backend.database.models.shared import LocationCreators
 from backend.database.service import location_service
 from backend.util import constants
 
-load_dotenv()
 client = AsyncIOMotorClient(constants.MONGODB_CONNECTION_STRING)
 
 
 async def init_db():
-    await init_beanie(database=client.AR, document_models=[LocationDetailedDb])
-    await init_beanie(database=client.AR, document_models=[LocationShortDb])
+    await init_beanie(
+        database=client[constants.DATABASE_NAME], document_models=[LocationDetailedDb]
+    )
+    await init_beanie(
+        database=client[constants.DATABASE_NAME], document_models=[LocationShortDb]
+    )
 
 
 def merge(geometries, centers):

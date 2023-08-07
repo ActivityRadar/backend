@@ -16,6 +16,7 @@ services:
     container_name: mongodb-container
     image: mongo:latest
     restart: always
+    env_file: .env
     ports:
       - 27018:27017 # to make the DB accessible from the outside via port 27018
     volumes:
