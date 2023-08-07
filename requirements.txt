@@ -1,11 +1,11 @@
 fastapi==0.99.0
-uvicorn[standard]
+uvicorn[standard]==0.21.1
 
 # for mongoDB
-pydantic-mongo
-beanie>=1.19.0
-motor
-pymongo
+pydantic-mongo==1.0.1
+beanie==1.21.0
+motor==3.2.0
+pymongo==4.4.1
 
 # for authentication
 python-multipart

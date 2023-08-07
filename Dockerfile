@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11
 
 WORKDIR /backend
 
@@ -10,5 +10,9 @@ COPY ./requirements.txt /backend/requirements.txt
 COPY ./.env /backend/.env
 
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
+
+# Uncomment this to save installed package versions
+# inspect with `docker cp <container-name>:/backend/freeze.txt`
+# RUN pip freeze > /backend/freeze.txt
 
 COPY ./backend /backend/backend
