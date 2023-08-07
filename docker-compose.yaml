@@ -20,8 +20,12 @@ services:
       - 27018:27017 # to make the DB accessible from the outside via port 27018
     volumes:
       - "mongodb_volume:/data/db"
+      - "./mongo-entrypoint/:/docker-entrypoint-initdb.d/"
     networks:
       - mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
 
   fastapi:
     container_name: fastapi-container
@@ -79,17 +83,4 @@ services:
       - mongo
     networks:
       - traefik-public
-      - mongo
-
-  mongo-express:
-    container_name: mongo-express-container
-    image: mongo-express
-    restart: always
-    ports:
-      - 8081:8081
-    depends_on:
-      - mongo
-    environment:
-      ME_CONFIG_MONGODB_URL: "${MONGODB_CONNECTION_STRING}"
-    networks:
       - mongo
