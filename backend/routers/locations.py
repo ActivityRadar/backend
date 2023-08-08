@@ -244,18 +244,22 @@ async def add_photo(user: ApiUser, location_id: PydanticObjectId, photo_url: Pho
         raise HTTPException(405, "Cant post more photo for this location!")
 
 
-@photo_router.delete("/{photo_id}")
-async def remove_photo(user: ApiUser, location_id: PydanticObjectId, photo_url: str):
-    owner = await location_service.get_photo_owner(location_id, photo_url)
+@photo_router.delete("/")
+async def remove_photo(
+    user: ApiUser, location_id: PydanticObjectId, photo_url: PhotoUrl
+):
+    owner = await location_service.get_photo_owner(location_id, photo_url.url)
 
     if user.id != owner:
         raise HTTPException(405, "User does not own photo!")
 
-    await location_service.remove_photo(location_id, photo_url)
+    await location_service.remove_photo(location_id, photo_url.url)
 
 
-@photo_router.put("/{photo_id}/report")
-async def report_photo(user: ApiUser, location_id: PydanticObjectId, photo_id: str):
+@photo_router.put("/report")
+async def report_photo(
+    user: ApiUser, location_id: PydanticObjectId, photo_url: PhotoUrl
+):
     # TODO: implement
     pass
 
