@@ -89,5 +89,5 @@ def save_schema():
 
     schema = cleanup_schema(schema)
 
-    with open("openapi.yaml", "w") as f:
+    with open("shared/openapi.yaml", "w") as f:
         yaml.dump(schema, f, sort_keys=False)
