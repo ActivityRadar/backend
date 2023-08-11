@@ -4,7 +4,7 @@ from typing import Any
 
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
-from beanie.operators import All, ElemMatch, In, RegEx
+from beanie.operators import All, ElemMatch, In, RegEx, Unset
 
 import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo
@@ -17,12 +17,14 @@ from backend.database.models.users import (
     UserApiIn,
     UserPasswordReset,
     UserRelation,
+    VerifyUserInfo,
 )
 from backend.util.crypto import (
     ChangePasswordForm,
     ResetPasswordForm,
     create_password_reset_token,
     decode_password_reset_token,
+    generate_random_string,
     hash_password,
     verify_password,
 )
@@ -37,6 +39,7 @@ CREATOR_TO_LOCATION_SCORES: dict[UserTrustScore, LocationTrustScore] = {
 
 INITIAL_TRUST_SCORE = 100
 USER_ARCHIVE_DAYS = 14
+NEW_USER_VERIFICATION_MINUTES = 20
 
 
 class UserService:
@@ -80,15 +83,47 @@ class UserService:
             email=user_info.email,
         )
 
+        random_string = generate_random_string(8)
         creation_time = datetime.utcnow()
         u = await NewUser(
             **user_info.dict(),
             creation_date=creation_time,
             authentication=auth,
             trust_score=INITIAL_TRUST_SCORE,
+            verification_code=random_string,
+            archived_until=datetime.utcnow()
+            + timedelta(minutes=NEW_USER_VERIFICATION_MINUTES),
         ).insert()
 
+        # TODO: send random_string per email
+        # for debugging purposes, print the string for now
+        print(random_string)
+
         return u
+
+    async def verify(self, verify_info: VerifyUserInfo) -> bool:
+        """return false if the given code does not match."""
+        u = await NewUser.find_one(NewUser.id == verify_info.id)
+        if u is None:
+            raise E.UserDoesNotExist()
+
+        if u.archived_until is None:
+            if u.verification_code is None:
+                raise E.AlreadyVerified()
+            raise Exception("User seems archived")
+
+        if u.archived_until < datetime.utcnow():
+            await u.delete()
+            raise E.VerificationTimeout()
+
+        if verify_info.verification_code != u.verification_code:
+            return False
+
+        await u.update(
+            Unset({NewUser.archived_until: ""}), Unset({NewUser.verification_code: ""})
+        )
+
+        return True
 
     async def archive(self, user: User) -> bool:
         if user.archived_until is not None:
@@ -107,8 +142,7 @@ class UserService:
         if user.archived_until is None:
             return False
 
-        user.archived_until = None
-        await user.save()
+        await user.update(Unset({User.archived_until: ""}))
 
         # TODO: do actions to reinstate the user normally
         # - reactivate offers

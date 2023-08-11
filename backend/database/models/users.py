@@ -47,9 +47,15 @@ class User(Document, UserWithoutId):
 
 class NewUser(Document, UserWithoutId):
     id: PydanticObjectId | None = None
+    verification_code: str | None = None
 
     class Settings:
         name = "users"
+
+
+class VerifyUserInfo(BaseModel):
+    id: PydanticObjectId
+    verification_code: str
 
 
 class UserApiOut(UserBase):

@@ -34,6 +34,14 @@ class EmailDoesNotMatchAccount(Exception):
     ...
 
 
+class VerificationTimeout(Exception):
+    ...
+
+
+class AlreadyVerified(Exception):
+    ...
+
+
 class TokenInvalid(Exception):
     ...
 

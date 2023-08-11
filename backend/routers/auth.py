@@ -45,7 +45,7 @@ async def get_admin(user: Annotated[User, Depends(get_current_user)]):
     return user
 
 
-async def authenticate_user(username: str, plain: str):
+async def authenticate_user(username: str, plain: str) -> User:
     auth_exception = HTTPException(400, "Incorrect details!")
     user = await get_user_by_name(username)
     if not user:

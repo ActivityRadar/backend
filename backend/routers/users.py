@@ -13,6 +13,7 @@ from backend.database.models.users import (
     UserApiOut,
     UserDetailed,
     UserRelation,
+    VerifyUserInfo,
 )
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
@@ -188,9 +189,23 @@ async def create_user(user_info: UserApiIn):
     try:
         u = await user_service.create_user(user_info)
     except E.UserWithNameExists:
-        raise HTTPException(400, "User with name exists!")
+        raise HTTPException(403, "User with name exists!")
 
     return {"id": u.id}
+
+
+@router.post("/verify")
+async def verify_new_user(verify_info: VerifyUserInfo):
+    try:
+        return await user_service.verify(verify_info)
+    except E.VerificationTimeout:
+        raise HTTPException(404, "Verification timed out! Recreate the user!")
+    except E.UserDoesNotExist:
+        raise HTTPException(404, "User does not exist!")
+    except E.AlreadyVerified:
+        raise HTTPException(403, "User already verified!")
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 
 @router.get("/id")
