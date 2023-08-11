@@ -42,6 +42,11 @@ class AlreadyVerified(Exception):
     ...
 
 
+class UserIsAlreadyArchived(Exception):
+    def __init__(self, archived_until):
+        self.archived_until = archived_until
+
+
 class TokenInvalid(Exception):
     ...
 

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from backend.database.models.offers import (
     OfferIn,
@@ -10,16 +11,20 @@ from backend.database.models.offers import (
     OfferTimeSingle,
 )
 from backend.database.service import (
+    chat_service,
     offer_service,
     relation_service,
     user_service,
-    chat_service,
 )
 from backend.routers.users import ApiUser
 from backend.util import errors
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
 router = APIRouter(prefix="/offers", tags=["offers"])
+
+
+class CreateOfferResponse(BaseModel):
+    offer_id: PydanticObjectId
 
 
 def create_search_time(time_from: datetime | None, time_until: datetime | None):
@@ -46,13 +51,13 @@ def create_search_time(time_from: datetime | None, time_until: datetime | None):
 
 
 @router.post("/")
-async def create_offer(user: ApiUser, offer_info: OfferIn):
+async def create_offer(user: ApiUser, offer_info: OfferIn) -> CreateOfferResponse:
     try:
         id = await offer_service.create(user, offer_info)
     except errors.LocationDoesNotExist:
         raise HTTPException(404, "Location not found!")
 
-    return {"message": "success", "offer_id": id}
+    return CreateOfferResponse(offer_id=id)
 
 
 @router.get("/")
@@ -110,8 +115,6 @@ async def set_offer_status(
     except errors.OfferDoesNotExist:
         raise HTTPException(404, "Offer does not exist!")
 
-    return {"message": "success"}
-
 
 @router.put("/{offer_id}")
 async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: str):
@@ -144,8 +147,6 @@ async def delete_offer(user: ApiUser, offer_id: PydanticObjectId):
         raise HTTPException(404, "Offer does not exist!")
     except errors.UserDoesNotOwnOffer:
         raise HTTPException(401, "User does not own offer!")
-
-    return {"message": "success"}
 
 
 def ignore_offers_from_user():

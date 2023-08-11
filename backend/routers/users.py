@@ -4,6 +4,7 @@ from typing import Annotated
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
 import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo, PhotoUrl
@@ -53,6 +54,11 @@ relation_router = APIRouter(
         Depends(get_current_user)
     ],  # only logged in users can access user data
 )
+
+
+class CreateUserResponse(BaseModel):
+    id: PydanticObjectId
+
 
 ApiUser = Annotated[User, Depends(get_current_user)]
 
@@ -155,8 +161,6 @@ async def accept_friend_request(user: ApiUser, relation_id: PydanticObjectId):
         print(type(e))
         raise HTTPException(400, "Bad request!")
 
-    return {"message": "Success!"}
-
 
 @relation_router.post("/decline/{relation_id}")
 async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
@@ -165,8 +169,6 @@ async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
     except Exception as e:
         print(type(e))
         raise HTTPException(400, "Bad request!")
-
-    return {"message": "Success!"}
 
 
 @relation_router.get("/")
@@ -183,14 +185,13 @@ async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
 
 
 @router.post("/")
-async def create_user(user_info: UserApiIn):
+async def create_user(user_info: UserApiIn) -> CreateUserResponse:
     # TODO: This should probably be protected with an API key.
     try:
         u = await user_service.create_user(user_info)
+        return CreateUserResponse(id=u.id)
     except E.UserWithNameExists:
         raise HTTPException(403, "User with name exists!")
-
-    return {"id": u.id}
 
 
 @router.post("/verify")
@@ -238,10 +239,6 @@ async def request_reset_password(request_body: ResetPasswordRequest):
         # Dont do anything, the potential attacker shouldnt know anything...
         pass
 
-    return {
-        "message": "If the E-mail address matched a user's, a request has been sent to it!"
-    }
-
 
 @router.put("/reset_password/{token}")
 async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
@@ -253,8 +250,6 @@ async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
         raise HTTPException(404, "User does not exist!")
     except E.UserNewPasswordDoesNotMatch:
         raise HTTPException(401, "Passwords don't match!")
-
-    return {"message": "Password reset successfully!"}
 
 
 @router.put("/reactivate")
