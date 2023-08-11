@@ -63,15 +63,14 @@ def get_this_user(user: ApiUser) -> UserDetailed:
 
 
 @me_router.delete("/")
-async def delete_user(form_data: OAuth2PasswordRequestForm = Depends()):
+async def delete_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
     user = await authenticate_user(form_data.username, form_data.password)
-    success = await user_service.archive(user)
-    if success:
-        message = "User was archived! Will be deleted in 14 days!"
-    else:
-        message = "User could not be archived!"
-
-    return {"message": message}
+    try:
+        await user_service.archive(user)
+    except E.UserIsAlreadyArchived as e:
+        raise HTTPException(403, f"User is already archived (until {e.archived_until})")
 
 
 @me_router.put("/")

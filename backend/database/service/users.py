@@ -125,9 +125,9 @@ class UserService:
 
         return True
 
-    async def archive(self, user: User) -> bool:
+    async def archive(self, user: User):
         if user.archived_until is not None:
-            return False
+            raise E.UserIsAlreadyArchived(archived_until=user.archived_until)
 
         user.archived_until = datetime.utcnow() + timedelta(days=USER_ARCHIVE_DAYS)
         await user.save()
@@ -135,8 +135,6 @@ class UserService:
         # TODO: do actions connected to archiving a user:
         # - deactivate their offers and events
         # - disable conversations with on user's contacts' clients
-
-        return True
 
     async def unarchive(self, user: User):
         if user.archived_until is None:
