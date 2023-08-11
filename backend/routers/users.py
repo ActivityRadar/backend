@@ -264,6 +264,13 @@ async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserApiOut
     return [UserApiOut(**u.dict()) for u in users]
 
 
+@router.get("/check-email")
+async def check_email_taken(email: Annotated[str, Query()]) -> bool:
+    """Returns true if the email is already in use."""
+    u = await user_service.get_by_email(email)
+    return u is not None
+
+
 @router.post("/report/{user_id}")
 def report_user(reporting_user: ApiUser, user_id: int):
     # TODO: implement
