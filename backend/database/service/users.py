@@ -120,7 +120,7 @@ class UserService:
             return False
 
         await u.update(
-            Unset({NewUser.archived_until: ""}), Unset({NewUser.verification_code: ""})
+            Unset({NewUser.archived_until: "", NewUser.verification_code: ""})
         )
 
         return True

@@ -234,7 +234,7 @@ class LocationService:
 
     async def remove_photo(self, location_id: PydanticObjectId, photo_url: str):
         loc: LocationDetailedDb = await self.get(location_id)
-        await loc.update(Pull(LocationDetailedDb.photos.url == photo_url))
+        await loc.update(Pull({LocationDetailedDb.photos: Eq("url", photo_url)}))
 
     async def add_review(self, location_id: PydanticObjectId, review: Review):
         loc = await self.get(location_id)
