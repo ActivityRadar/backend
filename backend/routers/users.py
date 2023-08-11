@@ -195,7 +195,7 @@ async def create_user(user_info: UserApiIn):
 
 
 @router.post("/verify")
-async def verify_new_user(verify_info: VerifyUserInfo):
+async def verify_new_user(verify_info: VerifyUserInfo) -> bool:
     try:
         return await user_service.verify(verify_info)
     except E.VerificationTimeout:
@@ -260,15 +260,13 @@ async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
 
 @router.put("/reactivate")
 async def unarchive_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    session_token_dict = await login(form_data)
-
-    user = await get_user_by_name(form_data.username)
-    if not user:
-        raise HTTPException(404, "User does not exist!")
+    user = await authenticate_user(form_data.username, form_data.password)
 
     success = await user_service.unarchive(user)
     if not success:
-        raise HTTPException(400, "User is not archived!")
+        raise HTTPException(403, "User is not archived!")
+
+    session_token_dict = await login(form_data)
 
     return session_token_dict
 

@@ -60,6 +60,10 @@ async def authenticate_user(username: str, plain: str) -> User:
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
+
+    if user.archived_until is not None:
+        raise HTTPException(403, f"User is archived until {user.archived_until}")
+
     token = create_access_token(data={"sub": str(user.id)})
 
     return {"access_token": token, "token_type": "bearer"}
