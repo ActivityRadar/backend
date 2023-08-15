@@ -3,6 +3,7 @@ from typing import Annotated
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, HTTPException, Query
+from pydantic import BaseModel
 
 import backend.util.errors as errors
 from backend.database.models.locations import (
@@ -79,8 +80,14 @@ async def get_location_bulk(location_ids: list[PydanticObjectId] = Query(alias="
     return [LocationDetailedApi(**loc.dict()) for loc in locations]
 
 
+class CreateLocationResponse(BaseModel):
+    id: PydanticObjectId
+
+
 @router.post("/")
-async def create_new_location(adding_user: ApiUser, info: LocationNew):
+async def create_new_location(
+    adding_user: ApiUser, info: LocationNew
+) -> CreateLocationResponse:
     try:
         trust_score = await user_service.check_eligible_to_add(adding_user.id)
     except errors.UserDoesNotExist:
@@ -95,7 +102,8 @@ async def create_new_location(adding_user: ApiUser, info: LocationNew):
         photos=[],
     )
     new_id = await location_service.insert(detailed, adding_user.id)
-    return {"id": new_id}
+
+    return CreateLocationResponse(id=new_id)
 
 
 @router.put("/")
@@ -105,8 +113,6 @@ async def update_location(user: ApiUser, location_info: LocationHistoryIn):
     except Exception as e:
         print(e)
         raise HTTPException(400, f"Some error occured! {type(e)}, {e}")
-
-    return {"message": "success"}
 
 
 @router.get("/{location_id}/update-history")
@@ -186,8 +192,6 @@ async def update_review(
     except errors.UserDoesNotOwnReview:
         raise HTTPException(401, "Not authorized to update this review!")
 
-    return {"message": "success"}
-
 
 @review_router.delete("/{review_id}")
 async def remove_review(
@@ -199,8 +203,6 @@ async def remove_review(
         raise HTTPException(404, "Review with given id not found!")
     except errors.UserDoesNotOwnReview:
         raise HTTPException(401, "Not authorized to delete this review!")
-
-    return {"message": "success"}
 
 
 @review_router.put("/{review_id}/report")
@@ -214,8 +216,6 @@ async def report_review(
         await review_service.report(user, review_id, reason)
     except errors.UserHasAlreadyReportedThisReview:
         raise HTTPException(401, "User has already reported this review!")
-
-    return {"message": "success"}
 
 
 @review_router.put("/confirmation")

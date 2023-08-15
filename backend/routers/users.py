@@ -4,6 +4,7 @@ from typing import Annotated
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
 import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo, PhotoUrl
@@ -13,6 +14,7 @@ from backend.database.models.users import (
     UserApiOut,
     UserDetailed,
     UserRelation,
+    VerifyUserInfo,
 )
 from backend.database.service import relation_service, user_service
 from backend.routers.auth import (
@@ -53,6 +55,11 @@ relation_router = APIRouter(
     ],  # only logged in users can access user data
 )
 
+
+class CreateUserResponse(BaseModel):
+    id: PydanticObjectId
+
+
 ApiUser = Annotated[User, Depends(get_current_user)]
 
 
@@ -62,15 +69,14 @@ def get_this_user(user: ApiUser) -> UserDetailed:
 
 
 @me_router.delete("/")
-async def delete_user(form_data: OAuth2PasswordRequestForm = Depends()):
+async def delete_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
     user = await authenticate_user(form_data.username, form_data.password)
-    success = await user_service.archive(user)
-    if success:
-        message = "User was archived! Will be deleted in 14 days!"
-    else:
-        message = "User could not be archived!"
-
-    return {"message": message}
+    try:
+        await user_service.archive(user)
+    except E.UserIsAlreadyArchived as e:
+        raise HTTPException(403, f"User is already archived (until {e.archived_until})")
 
 
 @me_router.put("/")
@@ -155,8 +161,6 @@ async def accept_friend_request(user: ApiUser, relation_id: PydanticObjectId):
         print(type(e))
         raise HTTPException(400, "Bad request!")
 
-    return {"message": "Success!"}
-
 
 @relation_router.post("/decline/{relation_id}")
 async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
@@ -165,8 +169,6 @@ async def decline_friend_request(user: ApiUser, relation_id: PydanticObjectId):
     except Exception as e:
         print(type(e))
         raise HTTPException(400, "Bad request!")
-
-    return {"message": "Success!"}
 
 
 @relation_router.get("/")
@@ -183,14 +185,27 @@ async def get_received_friend_requests(user: ApiUser) -> list[UserRelation]:
 
 
 @router.post("/")
-async def create_user(user_info: UserApiIn):
+async def create_user(user_info: UserApiIn) -> CreateUserResponse:
     # TODO: This should probably be protected with an API key.
     try:
         u = await user_service.create_user(user_info)
+        return CreateUserResponse(id=u.id)
     except E.UserWithNameExists:
-        raise HTTPException(400, "User with name exists!")
+        raise HTTPException(403, "User with name exists!")
 
-    return {"id": u.id}
+
+@router.post("/verify")
+async def verify_new_user(verify_info: VerifyUserInfo) -> bool:
+    try:
+        return await user_service.verify(verify_info)
+    except E.VerificationTimeout:
+        raise HTTPException(404, "Verification timed out! Recreate the user!")
+    except E.UserDoesNotExist:
+        raise HTTPException(404, "User does not exist!")
+    except E.AlreadyVerified:
+        raise HTTPException(403, "User already verified!")
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 
 @router.get("/id")
@@ -224,10 +239,6 @@ async def request_reset_password(request_body: ResetPasswordRequest):
         # Dont do anything, the potential attacker shouldnt know anything...
         pass
 
-    return {
-        "message": "If the E-mail address matched a user's, a request has been sent to it!"
-    }
-
 
 @router.put("/reset_password/{token}")
 async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
@@ -240,20 +251,16 @@ async def reset_password(token: str, reset_info: ResetPasswordForm = Body()):
     except E.UserNewPasswordDoesNotMatch:
         raise HTTPException(401, "Passwords don't match!")
 
-    return {"message": "Password reset successfully!"}
-
 
 @router.put("/reactivate")
 async def unarchive_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    session_token_dict = await login(form_data)
-
-    user = await get_user_by_name(form_data.username)
-    if not user:
-        raise HTTPException(404, "User does not exist!")
+    user = await authenticate_user(form_data.username, form_data.password)
 
     success = await user_service.unarchive(user)
     if not success:
-        raise HTTPException(400, "User is not archived!")
+        raise HTTPException(403, "User is not archived!")
+
+    session_token_dict = await login(form_data)
 
     return session_token_dict
 
@@ -262,6 +269,13 @@ async def unarchive_user(form_data: OAuth2PasswordRequestForm = Depends()):
 async def find_users_by_name(search: Annotated[str, Query()]) -> list[UserApiOut]:
     users = await user_service.find_by_name(search)
     return [UserApiOut(**u.dict()) for u in users]
+
+
+@router.get("/check-email")
+async def check_email_taken(email: Annotated[str, Query()]) -> bool:
+    """Returns true if the email is already in use."""
+    u = await user_service.get_by_email(email)
+    return u is not None
 
 
 @router.post("/report/{user_id}")

@@ -1,3 +1,5 @@
+import secrets
+import string
 from datetime import datetime, timedelta
 
 from beanie import PydanticObjectId
@@ -43,6 +45,14 @@ class ChangePasswordForm(NewPasswordForm):
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def generate_random_string(length, digits_only=True):
+    characters = string.digits
+    if not digits_only:
+        characters += string.ascii_letters
+    random_string = "".join(secrets.choice(characters) for _ in range(length))
+    return random_string
 
 
 def create_token(data: dict, expiry_time: timedelta):

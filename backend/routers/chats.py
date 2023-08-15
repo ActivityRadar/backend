@@ -2,12 +2,18 @@ from datetime import datetime
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
-from backend.database.models.users import Message
+from backend.database.models.users import Message, MessageOut
 from backend.database.service import chat_service, relation_service
 from backend.routers.users import ApiUser
 
 router = APIRouter(prefix="/chats", tags=["chats"])
+
+
+class PollChatsResponse(BaseModel):
+    messages: list[MessageOut]
+    poll_time: datetime
 
 
 @router.post("/")
@@ -23,10 +29,12 @@ async def start_chat(user: ApiUser, partner_id: PydanticObjectId) -> PydanticObj
 
 
 @router.get("/")
-async def poll_users_chats(user: ApiUser, last_poll_time: datetime):
+async def poll_users_chats(
+    user: ApiUser, last_poll_time: datetime
+) -> PollChatsResponse:
     messages, poll_time = await chat_service.get_new_messages(user, last_poll_time)
 
-    return {"messages": messages, "poll_time": poll_time}
+    return PollChatsResponse(messages=messages, poll_time=poll_time)
 
 
 @router.post("/message")
