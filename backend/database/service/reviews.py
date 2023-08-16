@@ -31,11 +31,14 @@ class ReviewService:
         # - details fit the location type
         pass
 
-    async def create(self, user: User, review_info: ReviewBase):
-        u = await Review.find_one(
-            Review.user_id == user.id,
-            Review.location_id == review_info.location_id,
+    async def get_from_user(self, user_id, location_id) -> Review | None:
+        return await Review.find_one(
+            Review.user_id == user_id,
+            Review.location_id == location_id,
         )
+
+    async def create(self, user: User, review_info: ReviewBase):
+        u = await self.get_from_user(user.id, review_info.location_id)
 
         # error if user has review for location already
         if u:
