@@ -6,6 +6,7 @@ from fastapi.routing import APIRoute
 
 from .database.connection import init as init_db
 from .routers import admin, auth, chats, locations, offers, users
+from .util.email import setup_email_server_connection
 
 app = FastAPI()
 
@@ -29,6 +30,9 @@ async def startup():
     app.include_router(offers.router)
     app.include_router(chats.router)
     # app.include_router(events.router)
+
+    # init email setup
+    setup_email_server_connection()
 
     # uncomment to generate a schema on startup. Usually only needed once the code is changed.
     # save_schema()

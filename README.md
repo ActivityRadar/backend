@@ -61,6 +61,8 @@ following:
 2. Set the variables in the `.env` file:
    - `LETSENCRYPT_EMAIL`: To the email you are using for `Let's Encrypt`.
    - `DOMAIN_NAME`: To the domain that redirects to your server instance.
+3. Set the email sending specific variables in the `.env` file
+   - `MAIL_SERVER`, `MAIL_PORT`, `MAIL_FROM`, `MAIL_PASSWORD`
 
 ### Test setup
 

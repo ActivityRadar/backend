@@ -28,6 +28,7 @@ from backend.util.crypto import (
     ResetPasswordForm,
     ResetPasswordRequest,
 )
+from backend.util.email import send_verification_email
 
 router = APIRouter(
     prefix="/users",
@@ -189,6 +190,9 @@ async def create_user(user_info: UserApiIn) -> CreateUserResponse:
     # TODO: This should probably be protected with an API key.
     try:
         u = await user_service.create_user(user_info)
+        await send_verification_email(
+            u.username, u.authentication.email, u.verification_code
+        )
         return CreateUserResponse(id=u.id)
     except E.UserWithNameExists:
         raise HTTPException(403, "User with name exists!")
