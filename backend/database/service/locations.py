@@ -31,7 +31,7 @@ class LocationService:
         return
 
     def get_activities_filter(self, activities):
-        return In(LocationShortDb.activity_type, activities)
+        return In(LocationShortDb.activity_types, activities)
 
     async def _insert(self, location: LocationDetailedDb):
         loc = await location.insert()

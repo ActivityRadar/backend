@@ -48,7 +48,7 @@ class ReviewsSummary(BaseModel):
 
 
 class LocationBase(BaseModel):
-    activity_type: str
+    activity_types: list[str]
     location: GeoJsonLocation
     name: str | None
     trust_score: int
