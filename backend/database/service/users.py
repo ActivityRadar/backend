@@ -95,10 +95,6 @@ class UserService:
             + timedelta(minutes=NEW_USER_VERIFICATION_MINUTES),
         ).insert()
 
-        # TODO: send random_string per email
-        # for debugging purposes, print the string for now
-        print(random_string)
-
         return u
 
     async def verify(self, verify_info: VerifyUserInfo) -> bool:
