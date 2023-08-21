@@ -161,6 +161,22 @@ async def get_reviews(
     return ReviewsPage(reviews=reviews, next_offset=new_offset)
 
 
+@review_router.get("/me")
+async def get_current_user_review_for_location(
+    location_id: PydanticObjectId, user: ApiUser
+) -> ReviewWithId | None:
+    """
+    Get user's review for a location if it exists.
+    """
+
+    review = await review_service.get_from_user(user.id, location_id)
+
+    if not review:
+        return None
+
+    return ReviewWithId(**review.dict())
+
+
 @review_router.post("/")
 async def create_review(
     user: ApiUser, location_id: PydanticObjectId, review: ReviewBase
