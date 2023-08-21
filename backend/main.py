@@ -78,6 +78,17 @@ def cleanup_schema(schema):
     return schema
 
 
+def fix_offer_time_schema(schema):
+    schema_name = "OfferTimeSingle"
+    d = schema["components"]["schemas"]
+    d[schema_name]["properties"]["times"]["items"] = {
+        "type": "string",
+        "format": "datetime",
+    }
+
+    return schema
+
+
 def save_schema():
     for route in app.routes:
         if isinstance(route, APIRoute):
@@ -92,6 +103,7 @@ def save_schema():
     )
 
     schema = cleanup_schema(schema)
+    schema = fix_offer_time_schema(schema)
 
     with open("shared/openapi.yaml", "w") as f:
         yaml.dump(schema, f, sort_keys=False)
