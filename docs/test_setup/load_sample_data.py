@@ -14,7 +14,6 @@ sys.path.append("../../")
 
 from backend.database.connection import client
 from backend.database.models.locations import (
-    LocationDetailed,
     LocationDetailedDb,
     LocationShortDb,
     ReviewsSummary,
@@ -98,7 +97,7 @@ def osm_to_mongo(loc):
     loc = munch.DefaultMunch.fromDict(loc)  # easier access in nested dicts
     d = {
         "_schemaVersion": 1,
-        "activity_type": loc.tags.sport,
+        "activity_types": loc.tags.sport.split(";"),
         "location": dict(loc.center),
         "creation": {
             "created_by": LocationCreators.OSM,
