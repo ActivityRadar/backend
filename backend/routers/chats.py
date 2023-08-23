@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from backend.database.models.users import Message, MessageOut
 from backend.database.service import chat_service, relation_service
-from backend.routers.users import ApiUser
+from backend.routers.auth import ApiUser
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 

@@ -30,6 +30,10 @@ class UsernameAlreadyTaken(Exception):
     ...
 
 
+class UserAlreadyLoggedOut(Exception):
+    ...
+
+
 class EmailDoesNotMatchAccount(Exception):
     ...
 

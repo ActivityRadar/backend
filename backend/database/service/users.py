@@ -144,6 +144,17 @@ class UserService:
 
         return True
 
+    async def set_refresh_token(self, user: User, refresh_token: str):
+        user.authentication.refresh_token = refresh_token
+        await user.save()
+
+    async def delete_refresh_token(self, user: User):
+        if user.authentication.refresh_token is None:
+            raise E.UserAlreadyLoggedOut()
+
+        user.authentication.refresh_token = None
+        await user.save()
+
     async def change_password(self, user: User, form: ChangePasswordForm):
         if not verify_password(form.old_password, user.authentication.password_hash):
             raise E.UserWrongPassword()

@@ -16,7 +16,7 @@ from backend.database.service import (
     relation_service,
     user_service,
 )
-from backend.routers.users import ApiUser
+from backend.routers.auth import ApiUser
 from backend.util import errors
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 

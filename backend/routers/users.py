@@ -9,7 +9,6 @@ from pydantic import BaseModel
 import backend.util.errors as E
 from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.models.users import (
-    User,
     UserApiIn,
     UserApiOut,
     UserDetailed,
@@ -17,12 +16,7 @@ from backend.database.models.users import (
     VerifyUserInfo,
 )
 from backend.database.service import relation_service, user_service
-from backend.routers.auth import (
-    authenticate_user,
-    get_current_user,
-    get_user_by_name,
-    login,
-)
+from backend.routers.auth import ApiUser, authenticate_user, get_current_user, login
 from backend.util.crypto import (
     ChangePasswordForm,
     ResetPasswordForm,
@@ -61,12 +55,9 @@ class CreateUserResponse(BaseModel):
     id: PydanticObjectId
 
 
-ApiUser = Annotated[User, Depends(get_current_user)]
-
-
 @me_router.get("/")
 def get_this_user(user: ApiUser) -> UserDetailed:
-    return UserDetailed(**user.dict())
+    return UserDetailed(**user.dict(), email=user.authentication.email)
 
 
 @me_router.delete("/")

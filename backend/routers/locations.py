@@ -20,7 +20,7 @@ from backend.database.models.locations import (
 )
 from backend.database.models.shared import PhotoInfo, PhotoUrl
 from backend.database.service import location_service, review_service, user_service
-from backend.routers.users import ApiUser
+from backend.routers.auth import ApiUser
 from backend.util.types import LatitudeCoordinate, LongitudeCoordinate
 
 router = APIRouter(prefix="/locations", tags=["locations"])

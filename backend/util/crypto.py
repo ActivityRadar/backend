@@ -80,7 +80,15 @@ def decode_token(token: str):
     return token_data
 
 
-def create_access_token(data: dict, expiry_time: timedelta | None = None):
+def create_refresh_token(data: dict, expiry_time: timedelta | None = None):
+    expiry_time = expiry_time or constants.REFRESH_TOKEN_EXPIRY_TIME
+    token, _ = create_token(data, expiry_time)
+    return token
+
+
+def refresh_access_token(
+    data: dict, refresh_token: str, expiry_time: timedelta | None = None
+):
     expiry_time = expiry_time or SESSION_TOKEN_EXPIRE
     token, _ = create_token(data, expiry_time)
     return token
