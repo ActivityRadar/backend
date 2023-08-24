@@ -80,12 +80,15 @@ class LocationService:
         radius: float | None,
         limit: int,
     ) -> list[LocationDetailedDb]:
-        if radius and radius < 1 or limit == 0:
+        if radius and radius < 0.001 or limit == 0:
             return []
 
         return await self.find_with_filters(
             Near(
-                LocationDetailedDb.location, center[0], center[1], max_distance=radius
+                LocationDetailedDb.location,
+                center[0],
+                center[1],
+                max_distance=radius * 1000 if radius else None,
             ),
             activities=activities,
             limit=limit,
