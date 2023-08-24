@@ -11,3 +11,6 @@ pymongo==4.4.1
 python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
+
+# for distance calculation
+geopy
