@@ -19,6 +19,7 @@ class Authentication(BaseModel):
     type: AuthType
     password_hash: str | None = None
     email: str | None = None
+    refresh_token: str | None = None
     # more optional members to follow
 
 
@@ -28,12 +29,15 @@ class UserWithoutId(UserBase):
     ip_address: IPvAnyAddress | None = None
     creation_date: Datetime
     last_location: GeoJsonLocation | None = None
-    authentication: Authentication
     archived_until: Datetime | None = None
     admin: bool | None = None
 
 
-class User(Document, UserWithoutId):
+class UserWithAuthentication(UserWithoutId):
+    authentication: Authentication
+
+
+class User(Document, UserWithAuthentication):
     id: PydanticObjectId
 
     class Settings:
@@ -45,7 +49,7 @@ class User(Document, UserWithoutId):
         ]
 
 
-class NewUser(Document, UserWithoutId):
+class NewUser(Document, UserWithAuthentication):
     id: PydanticObjectId | None = None
     verification_code: str | None = None
 
@@ -70,6 +74,7 @@ class UserApiIn(UserBase):
 
 class UserDetailed(UserWithoutId):
     id: PydanticObjectId
+    email: str
 
 
 class UserPasswordReset(Document):
