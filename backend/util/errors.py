@@ -34,6 +34,18 @@ class UserAlreadyLoggedOut(Exception):
     ...
 
 
+class UserIsNotParticipant(Exception):
+    ...
+
+
+class UserAlreadyRequestedToJoin(Exception):
+    ...
+
+
+class ParticipantStatusUnchanged(Exception):
+    ...
+
+
 class EmailDoesNotMatchAccount(Exception):
     ...
 

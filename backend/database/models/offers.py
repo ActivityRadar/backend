@@ -1,9 +1,10 @@
+import enum
 from datetime import date
 from enum import Enum
 from typing import Annotated, Literal, Union
 
 from beanie import Document, PydanticObjectId
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from pymongo import DESCENDING, GEO2D, GEOSPHERE, IndexModel
 
 from backend.util.types import Datetime, TimeSlotFixed, TimeSlotFlexible
@@ -42,8 +43,7 @@ class OfferLocationBase(BaseModel):
 class OfferLocationArea(OfferLocationBase):
     # type: Literal["area"] = "area"
     coords: GeoJsonLocation
-    radius: float
-    #
+
     # @validator("coords")
     # def prevent_empty(cls, v):
     #     assert v is not None, "Coordinates must be given"
@@ -113,30 +113,64 @@ OfferTime = Annotated[
 #     # recurrence: Recurrence | None
 
 
-class OfferBase(BaseModel):
-    location: OfferLocation
-    activity: list[str]
-    time: OfferTime
-    description: str
+class ParticipantStatus(str, Enum):
+    HOST = "host"
+    REQUESTED = "requested"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    WITHDRAWN = "withdrawn"
 
 
-class OfferIn(OfferBase):
-    visibility: OfferVisibility
+class Participant(BaseModel):
+    id: PydanticObjectId
+    status: ParticipantStatus
 
 
-class OfferOut(OfferBase):
-    user_info: UserBase
+class LocationBlurrBase(BaseModel):
+    radius: float  # in km
+
+
+class LocationBlurrIn(LocationBlurrBase):
+    ...
+
+
+class LocationBlurrOut(LocationBlurrBase):
+    center: GeoJsonLocation
 
 
 class OfferCreatorInfo(UserBase):
     id: PydanticObjectId
 
 
-class Offer(Document, OfferBase):
+class OfferBase(BaseModel):
+    activity: list[str]
+    time: OfferTime
+    description: str
+    visibility: OfferVisibility
+    visibility_radius: float  # in km
+    location: OfferLocation
+
+
+class OfferIn(OfferBase):
+    blurr: LocationBlurrIn
+
+
+class OfferWithParticipants(OfferBase):
+    participants: list[Participant]
+
+
+class OfferOut(OfferWithParticipants):
+    id: PydanticObjectId
+    user_info: OfferCreatorInfo
+    location: OfferLocation | None
+    blurr_info: LocationBlurrOut
+
+
+class Offer(Document, OfferWithParticipants):
     user_info: OfferCreatorInfo
     creation_date: Datetime
-    visibility: OfferVisibility
     status: OfferStatus
+    blurr_info: LocationBlurrOut
 
     class Settings:
         name = "offers"
@@ -147,4 +181,7 @@ class Offer(Document, OfferBase):
             # ),
             # Needed for Near find operator
             IndexModel([("location.coords", GEOSPHERE)], name="location_index_GEO"),
+            IndexModel(
+                [("blurr_info.center", GEOSPHERE)], name="blurr_location_index_GEO"
+            ),
         ]

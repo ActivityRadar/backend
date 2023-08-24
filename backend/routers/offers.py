@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.database.models.offers import (
+    Offer,
     OfferIn,
+    OfferOut,
     OfferStatus,
     OfferTimeFlexible,
     OfferTimeSingle,
@@ -50,25 +52,41 @@ def create_search_time(time_from: datetime | None, time_until: datetime | None):
     return OfferTimeSingle(times=(time_from, time_until))
 
 
+def to_offer_out(offer):
+    return OfferOut(**offer.dict())
+
+
+def include_location_for_host(offers: list[Offer], user_id: PydanticObjectId):
+    res = []
+    for offer in offers:
+        out = to_offer_out(offer)
+        if out.user_info.id != user_id:
+            out.location = None
+
+        res.append(out)
+
+    return res
+
+
 @router.post("/")
-async def create_offer(user: ApiUser, offer_info: OfferIn) -> CreateOfferResponse:
+async def create_offer(user: ApiUser, offer_info: OfferIn) -> OfferOut:
     try:
-        id = await offer_service.create(user, offer_info)
+        offer = await offer_service.create(user, offer_info)
     except errors.LocationDoesNotExist:
         raise HTTPException(404, "Location not found!")
 
-    return CreateOfferResponse(offer_id=id)
+    return to_offer_out(offer)
 
 
 @router.get("/")
 async def get_offers(
     user: ApiUser, offer_ids: list[PydanticObjectId] = Query(alias="id")
-):
+) -> list[OfferOut]:
     ids = list(set(offer_ids))  # remove duplicates
 
-    offers = await offer_service.get(ids)
+    offers = await offer_service.get_bulk(ids)
 
-    return offers
+    return include_location_for_host(offers, user.id)
 
 
 @router.get("/location/{location_id}")
@@ -77,7 +95,7 @@ async def get_offers_at_location(
     location_id: PydanticObjectId,
     time_from: datetime = Query(None),
     time_until: datetime = Query(None),
-):
+) -> list[OfferOut]:
     search_time = create_search_time(time_from, time_until)
 
     try:
@@ -85,7 +103,7 @@ async def get_offers_at_location(
     except errors.LocationDoesNotExist:
         raise HTTPException(404, "Location not found!")
 
-    return offers
+    return include_location_for_host(offers, user.id)
 
 
 @router.get("/around")
@@ -97,11 +115,13 @@ async def get_offers_in_area(
     time_from: datetime = Query(None),
     time_until: datetime = Query(None),
     activities: list[str] = Query(None),
-):
+) -> list[OfferOut]:
     search_time = create_search_time(time_from, time_until)
-    return await offer_service.get_around(
+    offers = await offer_service.get_around(
         user, (long, lat), radius, search_time, activities
     )
+
+    return include_location_for_host(offers, user.id)
 
 
 @router.put("/me/{offer_id}")
@@ -117,26 +137,35 @@ async def set_offer_status(
 
 
 @router.put("/{offer_id}")
-async def contact_offerer(user: ApiUser, offer_id: PydanticObjectId, message: str):
-    try:
-        offer = (await offer_service.get([offer_id]))[0]
-    except IndexError:
-        raise HTTPException(404, "Offer not found!")
+async def request_to_join(
+    user: ApiUser, offer_id: PydanticObjectId, message: str = Body()
+):
+    await offer_service.request_to_join(user=user, offer_id=offer_id, message=message)
 
-    offerer = await user_service.get_by_id(offer.user_info.id)
-    if not offerer:
-        # should not happen
-        raise HTTPException(404, "Offerer does not exist (anymore)!")
 
-    user_ids = [user.id, offer.user_info.id]
-    relation = await relation_service.has_relation_to(user.id, offerer.id)
-    if not relation:
-        relation = await relation_service.create_chatting(user_ids)
-
-    chat = await chat_service.get_or_create(relation)
-    await chat_service.react_to_offer(user, chat, offer_id, message)
-
-    return {"chat_id": chat.id}
+# @router.put("/{offer_id}")
+# async def contact_offerer(
+#     user: ApiUser, offer_id: PydanticObjectId, message: str = Body()
+# ):
+#     offer = await offer_service.get(offer_id)
+#     if offer is None:
+#         raise HTTPException(404, "Offer not found!")
+#
+#     offerer = await user_service.get_by_id(offer.user_info.id)
+#     if not offerer:
+#         # should not happen
+#         raise HTTPException(404, "Offerer does not exist (anymore)!")
+#
+#     user_ids = [user.id, offer.user_info.id]
+#     relation = await relation_service.has_relation_to(user.id, offerer.id)
+#     if not relation:
+#         relation = await relation_service.create_chatting(user_ids)
+#
+#     chat = await chat_service.get_or_create(relation)
+#     await chat_service.react_to_offer(user, chat, offer_id, message)
+#
+#     return {"chat_id": chat.id}
+#
 
 
 @router.delete("/{offer_id}")
@@ -157,9 +186,19 @@ def unignore_offers_from_user():
     pass
 
 
-def decline_reaction():
-    pass
+@router.put("/me/{offer_id}/decline/{user_id}")
+async def decline_request(
+    user: ApiUser, offer_id: PydanticObjectId, user_id: PydanticObjectId
+):
+    await offer_service.decline_request(
+        host=user, offer_id=offer_id, participant_id=user_id
+    )
 
 
-def accept_reaction():
-    pass
+@router.put("/me/{offer_id}/accept/{user_id}")
+async def accept_request(
+    user: ApiUser, offer_id: PydanticObjectId, user_id: PydanticObjectId
+):
+    await offer_service.accept_request(
+        host=user, offer_id=offer_id, participant_id=user_id
+    )

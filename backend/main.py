@@ -83,7 +83,7 @@ def fix_offer_time_schema(schema):
     d = schema["components"]["schemas"]
     d[schema_name]["properties"]["times"]["items"] = {
         "type": "string",
-        "format": "datetime",
+        "format": "date-time",
     }
 
     return schema
