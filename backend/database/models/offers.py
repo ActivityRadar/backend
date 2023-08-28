@@ -9,7 +9,7 @@ from pymongo import DESCENDING, GEO2D, GEOSPHERE, IndexModel
 
 from backend.util.types import Datetime, TimeSlotFixed, TimeSlotFlexible
 
-from .shared import GeoJsonLocation, UserBase
+from .shared import DescriptionWithTitle, GeoJsonLocation, UserBase
 
 
 class OfferType(str, Enum):
@@ -145,10 +145,11 @@ class OfferCreatorInfo(UserBase):
 class OfferBase(BaseModel):
     activity: list[str]
     time: OfferTime
-    description: str
+    description: DescriptionWithTitle
     visibility: OfferVisibility
     visibility_radius: float  # in km
     location: OfferLocation
+    participant_limits: list[int]
 
 
 class OfferIn(OfferBase):
