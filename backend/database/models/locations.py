@@ -8,6 +8,7 @@ from pymongo import GEO2D, GEOSPHERE, IndexModel
 
 from backend.database.models.shared import (
     CreationInfo,
+    DescriptionWithTitle,
     GeoJsonLocation,
     GeoJsonObject,
     PhotoInfo,
@@ -17,8 +18,7 @@ from backend.util.types import Datetime
 
 class ReviewBase(BaseModel):
     location_id: PydanticObjectId
-    title: str
-    text: str  # TODO limit in length
+    description: DescriptionWithTitle
     overall_rating: float
     details: dict[str, Any]
 
