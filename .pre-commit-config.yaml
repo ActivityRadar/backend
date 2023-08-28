@@ -10,7 +10,7 @@ repos:
       - id: check-added-large-files
       - id: check-json
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "672abe14d309fc28817d45b6be25ea976a92222a"
+    rev: "v3.0.2"
     hooks:
       - id: prettier
   - repo: https://github.com/psf/black
