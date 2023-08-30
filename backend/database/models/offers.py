@@ -158,21 +158,18 @@ class OfferIn(OfferBase):
 
 class OfferWithParticipants(OfferBase):
     participants: list[Participant]
+    creation_date: Datetime
+    user_info: OfferCreatorInfo
+    blurr_info: LocationBlurrOut
+    status: OfferStatus
 
 
 class OfferOut(OfferWithParticipants):
     id: PydanticObjectId
-    user_info: OfferCreatorInfo
     location: OfferLocation | None
-    blurr_info: LocationBlurrOut
 
 
 class Offer(Document, OfferWithParticipants):
-    user_info: OfferCreatorInfo
-    creation_date: Datetime
-    status: OfferStatus
-    blurr_info: LocationBlurrOut
-
     class Settings:
         name = "offers"
         indexes = [
