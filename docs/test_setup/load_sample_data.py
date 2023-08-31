@@ -209,11 +209,8 @@ async def main():
 
     tiles = split_tiles(bbox=args.bbox, length=args.tile_length)
 
-    funs: list[Coroutine] = []
     for tile in tiles:
-        funs.append(work_tile(tile))
-
-    await asyncio.gather(*funs)
+        await work_tile(tile)
 
 
 if __name__ == "__main__":
