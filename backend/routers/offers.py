@@ -80,11 +80,20 @@ async def create_offer(user: ApiUser, offer_info: OfferIn) -> OfferOut:
 
 @router.get("/")
 async def get_offers(
-    user: ApiUser, offer_ids: list[PydanticObjectId] = Query(alias="id")
+    user: ApiUser,
+    offer_ids: list[PydanticObjectId] | None = Query(None, alias="id"),
+    all: bool = Query(False, alias="all-for-user"),
 ) -> list[OfferOut]:
-    ids = list(set(offer_ids))  # remove duplicates
+    if all:
+        offers = await offer_service.get_for_user(user)
+    else:
+        if not offer_ids:
+            raise HTTPException(
+                403, "Either `all-for-user` must be true, or `id`s given!"
+            )
 
-    offers = await offer_service.get_bulk(ids)
+        ids = list(set(offer_ids))  # remove duplicates
+        offers = await offer_service.get_bulk(ids)
 
     return include_location_for_host(offers, user.id)
 

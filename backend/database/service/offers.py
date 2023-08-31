@@ -6,7 +6,7 @@ from beanie import PydanticObjectId
 from beanie.odm.operators.find import BaseFindOperator
 from beanie.odm.operators.find.comparison import Eq, In
 from beanie.odm.queries.aggregation import AggregationQuery
-from beanie.operators import Near, Push
+from beanie.operators import ElemMatch, Near, Push
 from geopy import distance as geo_distance
 
 from backend.database.models.locations import LocationDetailedDb, LocationShortDb
@@ -158,6 +158,11 @@ class OfferService:
         offers = await Offer.find(In(Offer.id, ids)).to_list()
 
         return offers
+
+    async def get_for_user(self, user: User):
+        return await Offer.find(
+            ElemMatch(Offer.participants, {"id": user.id})
+        ).to_list()
 
     async def get_at_location(
         self, user: User, location_id: PydanticObjectId, date_time: OfferTime

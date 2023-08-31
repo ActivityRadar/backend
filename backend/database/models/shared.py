@@ -51,3 +51,8 @@ GeoJsonObject = GeoJsonLocation | GeoJsonLine | GeoJsonFeatureCollection
 class UserBase(BaseModel):
     username: str
     display_name: str
+
+
+class DescriptionWithTitle(BaseModel):
+    title: str
+    text: str
