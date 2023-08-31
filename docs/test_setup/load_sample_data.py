@@ -152,9 +152,9 @@ async def work_tile(tile: list[float]):
     await insert_all_service(elements)
 
 
-def split_tiles(south: float, west: float, north: float, east: float):
-    vertical = np.linspace(south, north, num=10)
-    horizontal = np.linspace(west, east, num=10)
+def split_tiles(bbox: list[float], length: float):
+    vertical = np.arange(bbox[0], bbox[2], step=length)
+    horizontal = np.arange(bbox[1], bbox[3], step=length)
 
     tiles = []
     for i in range(len(vertical) - 1):
@@ -172,8 +172,22 @@ def parse_args():
         description="Fetches data via the Overpass API and inserts it into the mongo DB",
     )
 
-    parser.add_argument("--reset", type=bool, default=False)
-    parser.add_argument("--bbox", nargs=4, type=float, default=[47, 5.8, 55, 15])
+    parser.add_argument(
+        "--reset",
+        help="Reset the database collections before downloading",
+        type=bool,
+        default=False,
+    )
+    parser.add_argument(
+        "--bbox",
+        nargs=4,
+        help="South, West, North, East bounding box",
+        type=float,
+        default=[47, 5.8, 55, 15],
+    )
+    parser.add_argument(
+        "--tile_length", help="Length of each tile", type=float, default=1
+    )
 
     return parser.parse_args()
 
@@ -186,7 +200,7 @@ async def main():
     if args.reset:
         await reset_collections()
 
-    tiles = split_tiles(*args.bbox)
+    tiles = split_tiles(bbox=args.bbox, length=args.tile_length)
 
     funs: list[Coroutine] = []
     for tile in tiles:
