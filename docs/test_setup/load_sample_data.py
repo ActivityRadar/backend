@@ -1,10 +1,12 @@
+import argparse
 import asyncio
 import json
 import sys
 from datetime import datetime
-from typing import Any
+from typing import Any, Coroutine
 
 import munch
+import numpy as np
 import overpass
 from beanie import init_beanie
 from dotenv import load_dotenv
@@ -42,13 +44,13 @@ def merge(geometries, centers):
 
     if centers["osm3s"] != geometries["osm3s"]:
         print("Different timestamps! Data might not match!")
-        return
+        # raise Exception()
     gs = geometries["elements"]
     cs = centers["elements"]
     for i, c in enumerate(cs):
         if gs[i]["id"] != c["id"]:
             print(f'IDs at {i=} dont match up! {gs[i]["id"]} != {c["id"]}')
-            return
+            raise Exception()
         gs[i]["center"] = c["geometry"]
 
 
@@ -61,22 +63,21 @@ def set_type(response):
         del el["tags"]["_osm_type"]
 
 
-def load_data_from_overpass():
-    api = overpass.API(timeout=100)
+def load_data_from_overpass(tile: list[float]):
+    api = overpass.API(timeout=1000)
 
-    query = """
-        [out:json][timeout:100];
-        area[name=Berlin]->.searchHere;
-        nwr[sport](area.searchHere);
+    south, west, north, east = tile
+    query = f"""
+        [out:json][bbox:{south},{west},{north},{east}];
+        nwr[sport];
         convert item ::id=id(),::=::,::geom=geom(),_osm_type=type();
         out geom;
     """
     geometries: dict[str, Any] = api.get(query, build=False)
 
-    query = """
-        [out:json][timeout:100];
-        area[name=Berlin]->.searchHere;
-        nwr[sport](area.searchHere);
+    query = f"""
+        [out:json][bbox:{south},{west},{north},{east}];
+        nwr[sport];
         convert item ::id=id(),::geom=geom();
         out center;
     """
@@ -120,8 +121,25 @@ def osm_to_mongo(loc):
 
 
 async def insert_all_service(elements):
+    skipped = 0
     for e in elements:
-        await location_service._insert(LocationDetailedDb(**osm_to_mongo(e)))
+        try:
+            mongo_format = osm_to_mongo(e)
+        except Exception as e:
+            print(e)
+            continue
+
+        loc = await LocationDetailedDb.find_one(
+            LocationDetailedDb.osm_id == mongo_format["osm_id"]
+        )
+        if loc:
+            # skip already existing locations
+            skipped += 1
+            continue
+
+        await location_service._insert(LocationDetailedDb(**mongo_format))
+
+    return skipped
 
 
 async def reset_collections():
@@ -129,25 +147,70 @@ async def reset_collections():
     await LocationDetailedDb.find({}).delete()
 
 
+async def work_tile(tile: list[float]):
+    south, west, north, east = tile
+    print(f"Loading data for tile: {south},{west},{north},{east}...")
+    data = load_data_from_overpass(tile)
+    print(f"Data loaded for tile: {south},{west},{north},{east}")
+
+    elements = data["elements"]
+    print(f"Hits: {len(elements)}")
+    skipped = await insert_all_service(elements)
+    print(f"Skipped: {skipped}/{len(elements)}")
+
+
+def split_tiles(bbox: list[float], length: float):
+    vertical = np.arange(bbox[0], bbox[2], step=length)
+    horizontal = np.arange(bbox[1], bbox[3], step=length)
+
+    tiles = []
+    for i in range(len(vertical) - 1):
+        for j in range(len(horizontal) - 1):
+            tiles.append(
+                (vertical[i], horizontal[j], vertical[i + 1], horizontal[j + 1])
+            )
+
+    return tiles
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="OSM Sports Data Fetcher",
+        description="Fetches data via the Overpass API and inserts it into the mongo DB",
+    )
+
+    parser.add_argument(
+        "--reset",
+        help="Reset the database collections before downloading",
+        type=bool,
+        default=False,
+    )
+    parser.add_argument(
+        "--bbox",
+        nargs=4,
+        help="South, West, North, East bounding box",
+        type=float,
+        default=[47, 5.8, 55, 15],
+    )
+    parser.add_argument(
+        "--tile_length", help="Length of each tile", type=float, default=1
+    )
+
+    return parser.parse_args()
+
+
 async def main():
     await init_db()
 
-    if len(sys.argv) > 1 and sys.argv[1] == "--reset":
+    args = parse_args()
+
+    if args.reset:
         await reset_collections()
 
-    try:
-        data = load_data_from_overpass()
-    except:
-        try:
-            data = json.load(open("../../sports.json", "r"))
-        except:
-            print(
-                "Can neither access overpass nor find the sports.json file in project."
-            )
-            sys.exit(1)
+    tiles = split_tiles(bbox=args.bbox, length=args.tile_length)
 
-    elements = data["elements"]
-    await insert_all_service(elements)
+    for tile in tiles:
+        await work_tile(tile)
 
 
 if __name__ == "__main__":
