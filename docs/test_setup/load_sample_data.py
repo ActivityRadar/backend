@@ -128,9 +128,10 @@ async def insert_all_service(elements):
             print(e)
             continue
 
-        if await LocationDetailedDb.find_one(
+        loc = await LocationDetailedDb.find_one(
             LocationDetailedDb.osm_id == mongo_format["osm_id"]
-        ):
+        )
+        if loc:
             # skip already existing locations
             continue
 
