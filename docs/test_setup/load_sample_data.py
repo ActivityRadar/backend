@@ -121,6 +121,7 @@ def osm_to_mongo(loc):
 
 
 async def insert_all_service(elements):
+    skipped = 0
     for e in elements:
         try:
             mongo_format = osm_to_mongo(e)
@@ -133,9 +134,12 @@ async def insert_all_service(elements):
         )
         if loc:
             # skip already existing locations
+            skipped += 1
             continue
 
         await location_service._insert(LocationDetailedDb(**mongo_format))
+
+    return skipped
 
 
 async def reset_collections():
@@ -150,7 +154,9 @@ async def work_tile(tile: list[float]):
     print(f"Data loaded for tile: {south},{west},{north},{east}")
 
     elements = data["elements"]
-    await insert_all_service(elements)
+    print(f"Hits: {len(elements)}")
+    skipped = await insert_all_service(elements)
+    print(f"Skipped: {skipped}/{len(elements)}")
 
 
 def split_tiles(bbox: list[float], length: float):
