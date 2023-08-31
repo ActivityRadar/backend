@@ -44,13 +44,13 @@ def merge(geometries, centers):
 
     if centers["osm3s"] != geometries["osm3s"]:
         print("Different timestamps! Data might not match!")
-        return
+        # raise Exception()
     gs = geometries["elements"]
     cs = centers["elements"]
     for i, c in enumerate(cs):
         if gs[i]["id"] != c["id"]:
             print(f'IDs at {i=} dont match up! {gs[i]["id"]} != {c["id"]}')
-            return
+            raise Exception()
         gs[i]["center"] = c["geometry"]
 
 
@@ -122,7 +122,19 @@ def osm_to_mongo(loc):
 
 async def insert_all_service(elements):
     for e in elements:
-        await location_service._insert(LocationDetailedDb(**osm_to_mongo(e)))
+        try:
+            mongo_format = osm_to_mongo(e)
+        except Exception as e:
+            print(e)
+            continue
+
+        if await LocationDetailedDb.find_one(
+            LocationDetailedDb.osm_id == mongo_format["osm_id"]
+        ):
+            # skip already existing locations
+            continue
+
+        await location_service._insert(LocationDetailedDb(**mongo_format))
 
 
 async def reset_collections():
