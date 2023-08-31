@@ -63,22 +63,21 @@ def set_type(response):
         del el["tags"]["_osm_type"]
 
 
-def load_data_from_overpass():
-    api = overpass.API(timeout=100)
+def load_data_from_overpass(tile: list[float]):
+    api = overpass.API(timeout=1000)
 
-    query = """
-        [out:json][timeout:100];
-        area[name=Berlin]->.searchHere;
-        nwr[sport](area.searchHere);
+    south, west, north, east = tile
+    query = f"""
+        [out:json][bbox:{south},{west},{north},{east}];
+        nwr[sport];
         convert item ::id=id(),::=::,::geom=geom(),_osm_type=type();
         out geom;
     """
     geometries: dict[str, Any] = api.get(query, build=False)
 
-    query = """
-        [out:json][timeout:100];
-        area[name=Berlin]->.searchHere;
-        nwr[sport](area.searchHere);
+    query = f"""
+        [out:json][bbox:{south},{west},{north},{east}];
+        nwr[sport];
         convert item ::id=id(),::geom=geom();
         out center;
     """
@@ -131,6 +130,30 @@ async def reset_collections():
     await LocationDetailedDb.find({}).delete()
 
 
+async def work_tile(tile: list[float]):
+    south, west, north, east = tile
+    print(f"Loading data for tile: {south},{west},{north},{east}...")
+    data = load_data_from_overpass(tile)
+    print(f"Data loaded for tile: {south},{west},{north},{east}")
+
+    elements = data["elements"]
+    await insert_all_service(elements)
+
+
+def split_tiles(south: float, west: float, north: float, east: float):
+    vertical = np.linspace(south, north, num=10)
+    horizontal = np.linspace(west, east, num=10)
+
+    tiles = []
+    for i in range(len(vertical) - 1):
+        for j in range(len(horizontal) - 1):
+            tiles.append(
+                (vertical[i], horizontal[j], vertical[i + 1], horizontal[j + 1])
+            )
+
+    return tiles
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="OSM Sports Data Fetcher",
@@ -151,8 +174,13 @@ async def main():
     if args.reset:
         await reset_collections()
 
-    elements = data["elements"]
-    await insert_all_service(elements)
+    tiles = split_tiles(*args.bbox)
+
+    funs: list[Coroutine] = []
+    for tile in tiles:
+        funs.append(work_tile(tile))
+
+    await asyncio.gather(*funs)
 
 
 if __name__ == "__main__":
