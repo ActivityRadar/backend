@@ -262,7 +262,7 @@ class OfferService:
     async def decline_request(
         self, host: User, offer_id: PydanticObjectId, participant_id: PydanticObjectId
     ):
-        self._set_participant_status(
+        await self._set_participant_status(
             host=host,
             offer_id=offer_id,
             participant_id=participant_id,
@@ -272,7 +272,7 @@ class OfferService:
     async def accept_request(
         self, host: User, offer_id: PydanticObjectId, participant_id: PydanticObjectId
     ):
-        self._set_participant_status(
+        await self._set_participant_status(
             host=host,
             offer_id=offer_id,
             participant_id=participant_id,
