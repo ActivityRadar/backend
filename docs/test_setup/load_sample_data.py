@@ -1,10 +1,12 @@
+import argparse
 import asyncio
 import json
 import sys
 from datetime import datetime
-from typing import Any
+from typing import Any, Coroutine
 
 import munch
+import numpy as np
 import overpass
 from beanie import init_beanie
 from dotenv import load_dotenv
@@ -129,22 +131,25 @@ async def reset_collections():
     await LocationDetailedDb.find({}).delete()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="OSM Sports Data Fetcher",
+        description="Fetches data via the Overpass API and inserts it into the mongo DB",
+    )
+
+    parser.add_argument("--reset", type=bool, default=False)
+    parser.add_argument("--bbox", nargs=4, type=float, default=[47, 5.8, 55, 15])
+
+    return parser.parse_args()
+
+
 async def main():
     await init_db()
 
-    if len(sys.argv) > 1 and sys.argv[1] == "--reset":
-        await reset_collections()
+    args = parse_args()
 
-    try:
-        data = load_data_from_overpass()
-    except:
-        try:
-            data = json.load(open("../../sports.json", "r"))
-        except:
-            print(
-                "Can neither access overpass nor find the sports.json file in project."
-            )
-            sys.exit(1)
+    if args.reset:
+        await reset_collections()
 
     elements = data["elements"]
     await insert_all_service(elements)
